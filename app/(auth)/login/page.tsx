@@ -1,36 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Scale, Loader2 } from 'lucide-react'
+import { type Department } from '@/lib/types'
 
 export default function LoginPage() {
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [mode, setMode]           = useState<'login' | 'register'>('login')
+  const [email, setEmail]         = useState('')
+  const [password, setPassword]   = useState('')
+  const [fullName, setFullName]   = useState('')
+  const [deptId, setDeptId]       = useState('')
+  const [departments, setDepts]   = useState<Department[]>([])
+  const [loading, setLoading]     = useState(false)
   const router   = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.from('departments').select('*').order('name').then(({ data }) => {
+      if (data) setDepts(data)
+    })
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
     if (error) {
       toast.error('Email atau password salah')
       setLoading(false)
       return
     }
-
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, dept_id')
-      .eq('id', data.user.id)
-      .single()
-
+      .from('profiles').select('role, dept_id').eq('id', data.user.id).single()
     if (profile?.role === 'kadiv') {
       router.push('/dashboard')
     } else if (profile?.dept_id) {
@@ -39,6 +43,40 @@ export default function LoginPage() {
       router.push('/dashboard')
     }
     router.refresh()
+  }
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault()
+    if (!deptId) { toast.error('Pilih departemen'); return }
+    if (fullName.trim().length < 3) { toast.error('Nama minimal 3 karakter'); return }
+    setLoading(true)
+
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error || !data.user) {
+      toast.error(error?.message ?? 'Gagal mendaftar')
+      setLoading(false)
+      return
+    }
+
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: data.user.id,
+      full_name: fullName.trim(),
+      role: 'staff',
+      dept_id: deptId,
+    })
+
+    if (profileError) {
+      toast.error('Gagal menyimpan profil')
+      setLoading(false)
+      return
+    }
+
+    toast.success('Akun berhasil dibuat! Silakan masuk.')
+    setMode('login')
+    setPassword('')
+    setFullName('')
+    setDeptId('')
+    setLoading(false)
   }
 
   const inputStyle: React.CSSProperties = {
@@ -55,20 +93,27 @@ export default function LoginPage() {
     letterSpacing: '-0.01em',
   }
 
+  const focusStyle = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    e.target.style.background = 'white'
+    e.target.style.borderColor = 'var(--blue)'
+    e.target.style.boxShadow = '0 0 0 3px rgba(0,113,227,0.15)'
+  }
+  const blurStyle = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    e.target.style.background = 'var(--gray-100)'
+    e.target.style.borderColor = 'var(--gray-300)'
+    e.target.style.boxShadow = 'none'
+  }
+
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--background)' }}>
-      {/* ── Left panel — dark brand ──────────────────────── */}
+      {/* ── Left panel ───────────────────────────────────── */}
       <div
         className="hidden lg:flex flex-col justify-between w-[440px] shrink-0 p-12"
         style={{ background: 'var(--navy-900)' }}
       >
-        {/* Logo */}
         <div>
           <div className="flex items-center gap-3 mb-14">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: 'var(--blue)' }}
-            >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--blue)' }}>
               <Scale size={20} className="text-white" />
             </div>
             <div>
@@ -76,31 +121,21 @@ export default function LoginPage() {
               <p className="text-xs mt-0.5" style={{ color: 'var(--navy-300)' }}>Divisi Hukum</p>
             </div>
           </div>
-
-          <h1
-            className="font-serif text-white leading-tight mb-5"
-            style={{ fontSize: '38px', letterSpacing: '-0.02em' }}
-          >
+          <h1 className="font-serif text-white leading-tight mb-5" style={{ fontSize: '38px', letterSpacing: '-0.02em' }}>
             Sistem Monitor<br />Kegiatan Hukum
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--navy-300)' }}>
             Pantau seluruh jadwal, progres, dan output kegiatan divisi hukum dari satu tempat — kapanpun, dari mana pun.
           </p>
         </div>
-
-        {/* Bottom stats */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { n: '4',        label: 'Departemen'      },
+            { n: '4', label: 'Departemen' },
             { n: 'Real‑time', label: 'Pembaruan Data' },
-            { n: '3 Peran',  label: 'Hak Akses'       },
-            { n: 'Mobile',   label: 'Friendly'         },
+            { n: '3 Peran', label: 'Hak Akses' },
+            { n: 'Mobile', label: 'Friendly' },
           ].map(({ n, label }) => (
-            <div
-              key={label}
-              className="rounded-xl p-4"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
+            <div key={label} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
               <p className="font-semibold text-base text-white leading-none mb-0.5 tracking-tight">{n}</p>
               <p className="text-xs" style={{ color: 'var(--navy-300)' }}>{label}</p>
             </div>
@@ -108,118 +143,138 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Right panel — form ───────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-3 mb-10">
+      {/* ── Right panel ──────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+        {/* Mobile logo — lebih besar */}
+        <div className="lg:hidden flex flex-col items-center gap-3 mb-8">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
             style={{ background: 'var(--navy-900)' }}
           >
-            <Scale size={20} className="text-white" />
+            <Scale size={32} className="text-white" />
           </div>
-          <div>
-            <p className="font-semibold text-sm leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <div className="text-center">
+            <p className="font-semibold text-lg leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>
               PT Timah Tbk
             </p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Divisi Hukum</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Divisi Hukum</p>
           </div>
         </div>
 
         <div className="w-full max-w-[380px]">
+          {/* Judul — tengah di mobile */}
           <h2
-            className="font-serif mb-1 tracking-tight"
-            style={{ fontSize: '28px', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
+            className="font-serif tracking-tight text-center lg:text-left mb-1"
+            style={{ fontSize: '22px', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
           >
-            Masuk
+            {mode === 'login' ? 'Masuk' : 'Buat Akun'}
           </h2>
-          <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
-            Monitor Kegiatan Divisi Hukum PT Timah
+          <p className="text-sm mb-6 text-center lg:text-left" style={{ color: 'var(--text-muted)' }}>
+            {mode === 'login'
+              ? 'Monitor Kegiatan Divisi Hukum PT Timah'
+              : 'Buat akun untuk mengakses kegiatan departemen'}
           </p>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium"
-                style={{ color: 'var(--text-secondary)' }}
+          {/* ── Login form ── */}
+          {mode === 'login' && (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Email</label>
+                <input
+                  type="email" placeholder="nama@pttimah.co.id"
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  required autoComplete="email" style={inputStyle}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Password</label>
+                <input
+                  type="password" placeholder="••••••••"
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  required autoComplete="current-password" style={inputStyle}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                />
+              </div>
+              <button
+                type="submit" disabled={loading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition-all"
+                style={{ padding: '11px', background: loading ? 'var(--blue-dark)' : 'var(--blue)', boxShadow: loading ? 'none' : '0 2px 8px rgba(0,113,227,0.3)', letterSpacing: '-0.01em' }}
               >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="nama@pttimah.co.id"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.background = 'white'
-                  e.target.style.borderColor = 'var(--blue)'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(0,113,227,0.15)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.background = 'var(--gray-100)'
-                  e.target.style.borderColor = 'var(--gray-300)'
-                  e.target.style.boxShadow = 'none'
-                }}
-              />
-            </div>
+                {loading ? <><Loader2 size={15} className="animate-spin" /> Memproses...</> : 'Masuk ke Sistem'}
+              </button>
+            </form>
+          )}
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium"
-                style={{ color: 'var(--text-secondary)' }}
+          {/* ── Register form ── */}
+          {mode === 'register' && (
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Nama Lengkap</label>
+                <input
+                  type="text" placeholder="Nama sesuai identitas"
+                  value={fullName} onChange={(e) => setFullName(e.target.value)}
+                  required style={inputStyle}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Email</label>
+                <input
+                  type="email" placeholder="nama@pttimah.co.id"
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  required autoComplete="email" style={inputStyle}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Password</label>
+                <input
+                  type="password" placeholder="Minimal 6 karakter"
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  required minLength={6} autoComplete="new-password" style={inputStyle}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Departemen</label>
+                <select
+                  value={deptId} onChange={(e) => setDeptId(e.target.value)}
+                  required
+                  style={{ ...inputStyle, cursor: 'pointer' }}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                >
+                  <option value="">Pilih departemen...</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="submit" disabled={loading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition-all"
+                style={{ padding: '11px', background: loading ? 'var(--blue-dark)' : 'var(--blue)', boxShadow: loading ? 'none' : '0 2px 8px rgba(0,113,227,0.3)', letterSpacing: '-0.01em' }}
               >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                style={inputStyle}
-                onFocus={(e) => {
-                  e.target.style.background = 'white'
-                  e.target.style.borderColor = 'var(--blue)'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(0,113,227,0.15)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.background = 'var(--gray-100)'
-                  e.target.style.borderColor = 'var(--gray-300)'
-                  e.target.style.boxShadow = 'none'
-                }}
-              />
-            </div>
+                {loading ? <><Loader2 size={15} className="animate-spin" /> Mendaftar...</> : 'Buat Akun'}
+              </button>
+            </form>
+          )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{
-                padding: '11px',
-                background: loading ? 'var(--blue-dark)' : 'var(--blue)',
-                boxShadow: loading ? 'none' : '0 2px 8px rgba(0,113,227,0.3)',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              {loading
-                ? <><Loader2 size={15} className="animate-spin" /> Memproses...</>
-                : 'Masuk ke Sistem'}
-            </button>
-          </form>
-
-          <p
-            className="text-center text-xs mt-8"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            Belum punya akun? Hubungi admin divisi.
+          {/* Toggle login/register */}
+          <p className="text-center text-sm mt-6" style={{ color: 'var(--text-muted)' }}>
+            {mode === 'login' ? (
+              <>Belum punya akun?{' '}
+                <button onClick={() => setMode('register')} className="font-semibold" style={{ color: 'var(--blue)' }}>
+                  Daftar di sini
+                </button>
+              </>
+            ) : (
+              <>Sudah punya akun?{' '}
+                <button onClick={() => setMode('login')} className="font-semibold" style={{ color: 'var(--blue)' }}>
+                  Masuk
+                </button>
+              </>
+            )}
           </p>
         </div>
       </div>
