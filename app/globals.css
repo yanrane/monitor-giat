@@ -1,26 +1,180 @@
 @import "tailwindcss";
 
+/* ── Apple System Design Tokens ──────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Apple Gray scale */
+  --gray-100: #f5f5f7;
+  --gray-200: #e8e8ed;
+  --gray-300: #d2d2d7;
+  --gray-400: #a1a1a6;
+  --gray-500: #6e6e73;
+  --gray-600: #3a3a3c;
+  --gray-900: #1d1d1f;
+
+  /* Apple Blue (CTA) */
+  --blue:       #0071e3;
+  --blue-dark:  #0064cc;
+  --blue-light: #e8f1fd;
+  --blue-50:    #f0f7ff;
+
+  /* Navy (brand identity — header & sidebar) */
+  --navy-950: #060f1a;
+  --navy-900: #0b1929;
+  --navy-700: #162c52;
+  --navy-600: #1d3a6b;
+  --navy-400: #4a72b8;
+  --navy-300: #7a9fd4;
+  --navy-100: #e8eef8;
+  --navy-50:  #f2f5fb;
+
+  /* Text */
+  --text-primary:   #1d1d1f;
+  --text-secondary: #3a3a3c;
+  --text-muted:     #6e6e73;
+  --text-tertiary:  #a1a1a6;
+
+  /* Surfaces */
+  --background:   #f5f5f7;
+  --surface:      #ffffff;
+  --surface-2:    #f5f5f7;
+  --border:       #d2d2d7;
+  --separator:    #e8e8ed;
+
+  /* shadcn compat */
+  --card:                  #ffffff;
+  --card-foreground:       #1d1d1f;
+  --popover:               #ffffff;
+  --popover-foreground:    #1d1d1f;
+  --primary:               #0071e3;
+  --primary-foreground:    #ffffff;
+  --secondary:             #f5f5f7;
+  --secondary-foreground:  #1d1d1f;
+  --muted:                 #f5f5f7;
+  --muted-foreground:      #6e6e73;
+  --accent:                #e8f1fd;
+  --accent-foreground:     #0071e3;
+  --destructive:           #ff3b30;
+  --foreground:            #1d1d1f;
+  --input:                 #f5f5f7;
+  --ring:                  #0071e3;
+  --border-color:          #d2d2d7;
+  --radius:                0.75rem;
+
+  /* Legacy aliases — keep for compatibility */
+  --cream:        #f5f5f7;
+  --cream-dark:   #e8e8ed;
+  --cream-border: #d2d2d7;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-serif);
+  --font-sans:  var(--font-sans);
+
+  --color-background:             var(--background);
+  --color-foreground:             var(--foreground);
+  --color-card:                   var(--card);
+  --color-card-foreground:        var(--card-foreground);
+  --color-popover:                var(--popover);
+  --color-popover-foreground:     var(--popover-foreground);
+  --color-primary:                var(--primary);
+  --color-primary-foreground:     var(--primary-foreground);
+  --color-secondary:              var(--secondary);
+  --color-secondary-foreground:   var(--secondary-foreground);
+  --color-muted:                  var(--muted);
+  --color-muted-foreground:       var(--muted-foreground);
+  --color-accent:                 var(--accent);
+  --color-accent-foreground:      var(--accent-foreground);
+  --color-destructive:            var(--destructive);
+  --color-border:                 var(--border);
+  --color-input:                  var(--input);
+  --color-ring:                   var(--ring);
+
+  --color-navy-950: var(--navy-950);
+  --color-navy-900: var(--navy-900);
+  --color-navy-700: var(--navy-700);
+  --color-navy-600: var(--navy-600);
+  --color-navy-400: var(--navy-400);
+  --color-navy-300: var(--navy-300);
+  --color-navy-100: var(--navy-100);
+  --color-navy-50:  var(--navy-50);
+
+  --color-blue:       var(--blue);
+  --color-blue-dark:  var(--blue-dark);
+  --color-blue-light: var(--blue-light);
+  --color-blue-50:    var(--blue-50);
+
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-900: var(--gray-900);
+
+  --color-cream:        var(--cream);
+  --color-cream-dark:   var(--cream-dark);
+  --color-cream-border: var(--cream-border);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
 }
+
+/* Apple serif — New York (macOS 10.15+) */
+.font-serif {
+  font-family: 'New York', 'Iowan Old Style', 'Apple Garamond',
+               'Baskerville', 'Times New Roman', serif;
+}
+.font-sans {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+               'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ── Status badges ──────────────────────────────────────────── */
+.status-belum_mulai { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
+.status-berjalan    { color: #92400e; background: #fffbeb; border-color: #fde68a; }
+.status-selesai     { color: #065f46; background: #ecfdf5; border-color: #a7f3d0; }
+.status-ditunda     { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+/* ── Dept accent colours ────────────────────────────────────── */
+.dept-litigasi { --dept-color: #7c3aed; --dept-bg: #f5f3ff; --dept-border: #ddd6fe; }
+.dept-non      { --dept-color: #1d4ed8; --dept-bg: #eff6ff; --dept-border: #bfdbfe; }
+.dept-konsul   { --dept-color: #0e7490; --dept-bg: #ecfeff; --dept-border: #a5f3fc; }
+.dept-asset    { --dept-color: #c2410c; --dept-bg: #fff7ed; --dept-border: #fed7aa; }
+
+/* ── Skeleton shimmer ───────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+/* ── Calendar overrides ─────────────────────────────────────── */
+.rbc-calendar  { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+.rbc-header    { background: var(--gray-100); padding: 8px 4px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+.rbc-today     { background: var(--blue-50) !important; }
+.rbc-event     { border-radius: 6px !important; border: none !important; font-size: 11px !important; padding: 2px 6px !important; }
+.rbc-toolbar button { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }

@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { ProtectedShell } from './ProtectedShell'
 
-export default async function HomePage() {
+export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -9,15 +10,11 @@ export default async function HomePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, dept_id')
+    .select('*, departments(name)')
     .eq('id', user.id)
     .single()
 
-  if (profile?.role === 'kadiv') {
-    redirect('/dashboard')
-  } else if (profile?.dept_id) {
-    redirect(`/departments/${profile.dept_id}`)
-  } else {
-    redirect('/login')
-  }
+  if (!profile) redirect('/login')
+
+  return <ProtectedShell profile={profile}>{children}</ProtectedShell>
 }
