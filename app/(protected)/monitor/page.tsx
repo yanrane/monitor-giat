@@ -69,6 +69,13 @@ export default function MonitorPage() {
       activityCount: activityCountMap.get(m.id) ?? 0,
     }))
 
+    const sortMembers = (members: MemberWithLog[]) =>
+      members.sort((a, b) => {
+        if (a.role === 'dept_head' && b.role !== 'dept_head') return -1
+        if (a.role !== 'dept_head' && b.role === 'dept_head') return 1
+        return a.full_name.localeCompare(b.full_name, 'id')
+      })
+
     // Group by department
     if (currentProfile.role === 'kadiv') {
       const deptMap = new Map<string, { dept: Department; members: MemberWithLog[] }>()
@@ -78,9 +85,11 @@ export default function MonitorPage() {
         if (!deptMap.has(key)) deptMap.set(key, { dept, members: [] })
         deptMap.get(key)!.members.push(m)
       }
-      setGroups(Array.from(deptMap.values()))
+      const grouped = Array.from(deptMap.values())
+      grouped.forEach((g) => sortMembers(g.members))
+      setGroups(grouped)
     } else {
-      setGroups([{ dept: null, members: withLogs }])
+      setGroups([{ dept: null, members: sortMembers(withLogs) }])
     }
 
     setLoading(false)
@@ -195,9 +204,19 @@ export default function MonitorPage() {
                           {getInitials(member.full_name)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
-                            {member.full_name}
-                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
+                              {member.full_name}
+                            </p>
+                            <span
+                              className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold uppercase tracking-wide shrink-0"
+                              style={member.role === 'dept_head'
+                                ? { background: '#ede9fe', color: '#6d28d9' }
+                                : { background: 'var(--gray-100)', color: 'var(--text-muted)' }}
+                            >
+                              {member.role === 'dept_head' ? 'Dept Head' : 'Staf'}
+                            </span>
+                          </div>
                           {member.log ? (
                             <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>
                               {member.log.content}
