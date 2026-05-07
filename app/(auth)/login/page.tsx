@@ -8,7 +8,7 @@ import { Scale, Loader2 } from 'lucide-react'
 import { type Department } from '@/lib/types'
 
 export default function LoginPage() {
-  const [mode, setMode]           = useState<'login' | 'register'>('login')
+  const [mode, setMode]           = useState<'login' | 'register' | 'forgot'>('login')
   const [email, setEmail]         = useState('')
   const [password, setPassword]   = useState('')
   const [fullName, setFullName]   = useState('')
@@ -43,6 +43,22 @@ export default function LoginPage() {
       router.push('/dashboard')
     }
     router.refresh()
+  }
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
+    })
+    setLoading(false)
+    if (error) {
+      toast.error('Gagal mengirim email reset password')
+    } else {
+      toast.success('Link reset password telah dikirim ke email Anda')
+      setMode('login')
+      setEmail('')
+    }
   }
 
   async function handleRegister(e: React.FormEvent) {
@@ -167,11 +183,13 @@ export default function LoginPage() {
             className="font-serif tracking-tight text-center lg:text-left mb-1"
             style={{ fontSize: '22px', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
           >
-            {mode === 'login' ? 'Masuk' : 'Buat Akun'}
+            {mode === 'login' ? 'Masuk' : mode === 'forgot' ? 'Lupa Password' : 'Buat Akun'}
           </h2>
           <p className="text-sm mb-6 text-center lg:text-left" style={{ color: 'var(--text-muted)' }}>
             {mode === 'login'
               ? 'Monitor Kegiatan Divisi Hukum PT Timah'
+              : mode === 'forgot'
+              ? 'Masukkan email Anda untuk menerima link reset password'
               : 'Buat akun untuk mengakses kegiatan departemen'}
           </p>
 
@@ -188,7 +206,17 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Password</label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Password</label>
+                  <button
+                    type="button"
+                    onClick={() => setMode('forgot')}
+                    className="text-xs font-medium"
+                    style={{ color: 'var(--blue)' }}
+                  >
+                    Lupa Password?
+                  </button>
+                </div>
                 <input
                   type="password" placeholder="••••••••"
                   value={password} onChange={(e) => setPassword(e.target.value)}
@@ -260,6 +288,28 @@ export default function LoginPage() {
             </form>
           )}
 
+          {/* ── Forgot password form ── */}
+          {mode === 'forgot' && (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Email</label>
+                <input
+                  type="email" placeholder="nama@pttimah.co.id"
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  required autoComplete="email" style={inputStyle}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                />
+              </div>
+              <button
+                type="submit" disabled={loading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white transition-all"
+                style={{ padding: '11px', background: loading ? 'var(--blue-dark)' : 'var(--blue)', boxShadow: loading ? 'none' : '0 2px 8px rgba(0,113,227,0.3)', letterSpacing: '-0.01em' }}
+              >
+                {loading ? <><Loader2 size={15} className="animate-spin" /> Mengirim...</> : 'Kirim Link Reset Password'}
+              </button>
+            </form>
+          )}
+
           {/* Toggle login/register */}
           <p className="text-center text-sm mt-6" style={{ color: 'var(--text-muted)' }}>
             {mode === 'login' ? (
@@ -269,9 +319,9 @@ export default function LoginPage() {
                 </button>
               </>
             ) : (
-              <>Sudah punya akun?{' '}
-                <button onClick={() => setMode('login')} className="font-semibold" style={{ color: 'var(--blue)' }}>
-                  Masuk
+              <>
+                <button onClick={() => { setMode('login'); setEmail('') }} className="font-semibold" style={{ color: 'var(--blue)' }}>
+                  ← Kembali ke halaman login
                 </button>
               </>
             )}
