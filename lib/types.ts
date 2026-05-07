@@ -5,6 +5,7 @@ export type NotificationType = 'status_change' | 'new_comment' | 'deadline_remin
 export interface Department {
   id: string
   name: string
+  sort_order: number
   created_at: string
 }
 

@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   if (profile?.role !== 'kadiv') redirect('/login')
 
   const [{ data: departments }, { data: activities }] = await Promise.all([
-    supabase.from('departments').select('*').order('name'),
+    supabase.from('departments').select('*').order('sort_order'),
     supabase
       .from('activities')
       .select('*, departments(name)')
@@ -71,10 +71,17 @@ export default async function DashboardPage() {
           <div className="h-px flex-1" style={{ background: 'var(--cream-border)' }} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {depts.map((dept) => (
+          {depts.filter((d) => d.sort_order < 5).map((dept) => (
             <DepartmentCard key={dept.id} department={dept} activities={actsByDept(dept.id)} />
           ))}
         </div>
+        {depts.filter((d) => d.sort_order >= 5).map((dept) => (
+          <div key={dept.id} className="flex justify-center mt-3">
+            <div className="w-full sm:w-1/2 sm:pr-1.5">
+              <DepartmentCard department={dept} activities={actsByDept(dept.id)} />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Active activities feed */}
