@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { type Department, type Activity, type ActivityStatus } from '@/lib/types'
+import { type Department, type Activity, type ActivityStatus, type Profile } from '@/lib/types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -17,6 +17,7 @@ const schema = z.object({
   end_date:     z.string().min(1, 'Tanggal selesai wajib diisi'),
   status:       z.enum(['belum_mulai', 'berjalan', 'selesai', 'ditunda'] as const),
   output_notes: z.string().optional(),
+  pic_id:       z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -46,9 +47,10 @@ interface ActivityFormProps {
   department: Department
   userId: string
   activity?: Activity
+  deptMembers?: Profile[]
 }
 
-export function ActivityForm({ department, userId, activity }: ActivityFormProps) {
+export function ActivityForm({ department, userId, activity, deptMembers = [] }: ActivityFormProps) {
   const router   = useRouter()
   const supabase = createClient()
   const isEdit   = !!activity
@@ -62,11 +64,17 @@ export function ActivityForm({ department, userId, activity }: ActivityFormProps
       end_date:     activity?.end_date   ? activity.end_date.slice(0, 16)   : '',
       status:       (activity?.status as ActivityStatus) ?? 'belum_mulai',
       output_notes: activity?.output_notes ?? '',
+      pic_id:       activity?.pic_id ?? '',
     },
   })
 
   async function onSubmit(data: FormData) {
-    const payload = { ...data, dept_id: department.id, created_by: userId }
+    const payload = {
+      ...data,
+      pic_id: data.pic_id || null,
+      dept_id: department.id,
+      created_by: userId,
+    }
     let error
     if (isEdit) {
       ;({ error } = await supabase.from('activities').update(payload).eq('id', activity!.id))
@@ -149,22 +157,44 @@ export function ActivityForm({ department, userId, activity }: ActivityFormProps
         </div>
       </div>
 
-      <div>
-        <Label>Status</Label>
-        <Select
-          defaultValue={watch('status')}
-          onValueChange={(val) => setValue('status', val as ActivityStatus)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="belum_mulai">Belum Mulai</SelectItem>
-            <SelectItem value="berjalan">Sedang Berjalan</SelectItem>
-            <SelectItem value="selesai">Selesai</SelectItem>
-            <SelectItem value="ditunda">Ditunda</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Status</Label>
+          <Select
+            defaultValue={watch('status')}
+            onValueChange={(val) => setValue('status', val as ActivityStatus)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="belum_mulai">Belum Mulai</SelectItem>
+              <SelectItem value="berjalan">Sedang Berjalan</SelectItem>
+              <SelectItem value="selesai">Selesai</SelectItem>
+              <SelectItem value="ditunda">Ditunda</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {deptMembers.length > 0 && (
+          <div>
+            <Label>PIC (Penanggung Jawab)</Label>
+            <Select
+              defaultValue={watch('pic_id') ?? ''}
+              onValueChange={(val) => setValue('pic_id', val === 'none' ? '' : val)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih PIC..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">— Tidak ada —</SelectItem>
+                {deptMembers.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <div>

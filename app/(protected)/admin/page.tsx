@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { type Profile, type Department } from '@/lib/types'
 import { InviteUserForm } from './InviteUserForm'
 import { EditProfileRow } from './EditProfileRow'
+import { ResetPasswordButton } from './ResetPasswordButton'
 import { Shield } from 'lucide-react'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -110,6 +111,7 @@ export default async function AdminPage() {
                   {ROLE_LABELS[u.role] ?? u.role}
                 </span>
 
+                {u.role !== 'kadiv' && <ResetPasswordButton userId={u.id} name={u.full_name} />}
                 <EditProfileRow profile={u} departments={depts} />
               </div>
             )

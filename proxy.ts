@@ -35,7 +35,9 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith('/activities') ||
       pathname.startsWith('/calendar') ||
       pathname.startsWith('/notifications') ||
-      pathname.startsWith('/admin')
+      pathname.startsWith('/admin') ||
+      pathname.startsWith('/daily-log') ||
+      pathname.startsWith('/monitor')
 
     if (isProtected) {
       const url = request.nextUrl.clone()

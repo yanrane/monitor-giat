@@ -26,10 +26,22 @@ export interface Activity {
   end_date: string
   status: ActivityStatus
   output_notes: string | null
+  pic_id: string | null
   created_by: string
   created_at: string
   updated_at: string
   departments?: Department
+  profiles?: Profile
+  pic?: Profile
+}
+
+export interface DailyLog {
+  id: string
+  user_id: string
+  log_date: string
+  content: string
+  created_at: string
+  updated_at: string
   profiles?: Profile
 }
 

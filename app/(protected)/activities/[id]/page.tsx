@@ -7,7 +7,7 @@ import { FileUploader } from '@/components/FileUploader'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { type Activity, type Comment, type Attachment, type Profile, DEPT_BG_COLORS } from '@/lib/types'
 import { formatDate, formatDateTime } from '@/lib/utils'
-import { ArrowLeft, Pencil, CalendarDays, FileText, User } from 'lucide-react'
+import { ArrowLeft, Pencil, CalendarDays, FileText, User, UserCheck } from 'lucide-react'
 import { DeleteActivityButton } from './DeleteActivityButton'
 
 export default async function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,7 +22,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
     { data: attachments },
     { data: profile },
   ] = await Promise.all([
-    supabase.from('activities').select('*, departments(name), profiles(full_name)').eq('id', id).single(),
+    supabase.from('activities').select('*, departments(name), profiles(full_name), pic:profiles!activities_pic_id_fkey(full_name)').eq('id', id).single(),
     supabase.from('comments').select('*, profiles(full_name, role)').eq('activity_id', id).order('created_at'),
     supabase.from('attachments').select('*, profiles(full_name)').eq('activity_id', id).order('created_at'),
     supabase.from('profiles').select('*, departments(name)').eq('id', user.id).single(),
@@ -30,10 +30,11 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
 
   if (!activity) notFound()
 
-  const act         = activity as Activity
+  const act         = activity as Activity & { pic: { full_name: string } | null }
   const currentUser = profile as Profile
   const canEdit     = currentUser.role !== 'kadiv' && currentUser.dept_id === act.dept_id
-  const canDelete   = currentUser.role === 'dept_head' && currentUser.dept_id === act.dept_id
+  const canDelete   = (currentUser.role === 'dept_head' && currentUser.dept_id === act.dept_id)
+                   || (currentUser.role === 'staff' && act.created_by === user.id)
   const deptName    = act.departments?.name ?? ''
   const accent      = DEPT_BG_COLORS[deptName] ?? 'var(--navy-600)'
 
@@ -88,6 +89,15 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
               <CalendarDays size={12} />
               {formatDate(act.start_date)} — {formatDate(act.end_date)}
             </span>
+            {act.pic && (
+              <span
+                className="flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: 'var(--navy-100)', color: 'var(--navy-700)' }}
+              >
+                <UserCheck size={11} />
+                PIC: {act.pic.full_name}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -151,6 +161,12 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
               <User size={11} />
               <span>Dibuat oleh <strong>{act.profiles?.full_name}</strong></span>
             </div>
+            {act.pic && (
+              <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <UserCheck size={11} />
+                <span>PIC: <strong>{act.pic.full_name}</strong></span>
+              </div>
+            )}
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Dibuat: {formatDateTime(act.created_at)}
             </p>
