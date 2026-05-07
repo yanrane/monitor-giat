@@ -22,7 +22,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
     { data: attachments },
     { data: profile },
   ] = await Promise.all([
-    supabase.from('activities').select('*, departments(name), profiles(full_name), pic:profiles!activities_pic_id_fkey(full_name)').eq('id', id).single(),
+    supabase.from('activities').select('*, departments(name), profiles!created_by(full_name), pic:profiles!pic_id(full_name)').eq('id', id).single(),
     supabase.from('comments').select('*, profiles(full_name, role)').eq('activity_id', id).order('created_at'),
     supabase.from('attachments').select('*, profiles(full_name)').eq('activity_id', id).order('created_at'),
     supabase.from('profiles').select('*, departments(name)').eq('id', user.id).single(),
