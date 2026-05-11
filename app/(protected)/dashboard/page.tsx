@@ -17,15 +17,14 @@ export default async function DashboardPage() {
     supabase
       .from('activities')
       .select('*, departments(name)')
-      .order('end_date', { ascending: true })
-      .limit(50),
+      .order('end_date', { ascending: true }),
   ])
 
   const depts = departments as Department[] ?? []
   const acts  = activities  as Activity[]  ?? []
 
   const actsByDept = (deptId: string) => acts.filter((a) => a.dept_id === deptId)
-  const recentActs = acts.filter((a) => a.status !== 'selesai').slice(0, 10)
+  const recentActs = acts.filter((a) => a.status !== 'selesai')
 
   const totalActs   = acts.length
   const activeActs  = acts.filter((a) => a.status === 'berjalan').length
