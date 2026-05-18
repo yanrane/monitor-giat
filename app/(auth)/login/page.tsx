@@ -77,7 +77,6 @@ export default function LoginPage() {
     const { error: profileError } = await supabase.from('profiles').insert({
       id: data.user.id,
       full_name: fullName.trim(),
-      role: 'staff',
       dept_id: deptId,
     })
 

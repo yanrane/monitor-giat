@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { type Profile, type Department } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -10,25 +9,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label'
 import { Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { updateUserProfile } from './actions'
+
+type EditableRole = 'dept_head' | 'staff'
 
 export function EditProfileRow({ profile, departments }: { profile: Profile; departments: Department[] }) {
   const [open, setOpen] = useState(false)
-  const [role, setRole] = useState(profile.role)
+  const [role, setRole] = useState<EditableRole>(profile.role === 'dept_head' ? 'dept_head' : 'staff')
   const [deptId, setDeptId] = useState(profile.dept_id ?? '')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   if (profile.role === 'kadiv') return null
 
   async function handleSave() {
     setLoading(true)
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role, dept_id: deptId || null })
-      .eq('id', profile.id)
+    const { error } = await updateUserProfile(profile.id, role, deptId)
     if (error) {
-      toast.error('Gagal memperbarui profil')
+      toast.error(`Gagal memperbarui profil: ${error}`)
     } else {
       toast.success('Profil berhasil diperbarui')
       setOpen(false)
@@ -51,7 +49,7 @@ export function EditProfileRow({ profile, departments }: { profile: Profile; dep
         <div className="space-y-3 pt-2">
           <div className="space-y-1.5">
             <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as any)}>
+            <Select value={role} onValueChange={(v) => setRole(v as EditableRole)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="dept_head">Dept Head</SelectItem>
