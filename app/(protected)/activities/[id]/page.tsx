@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { StatusBadge } from '@/components/StatusBadge'
 import { CommentThread } from '@/components/CommentThread'
 import { FileUploader } from '@/components/FileUploader'
+import { TaskList } from '@/components/TaskList'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { type Activity, type Comment, type Attachment, type Profile, DEPT_BG_COLORS } from '@/lib/types'
+import { type Activity, type Comment, type Attachment, type Profile, type Task, DEPT_BG_COLORS } from '@/lib/types'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { ArrowLeft, Pencil, CalendarDays, FileText, User, UserCheck } from 'lucide-react'
 import { DeleteActivityButton } from './DeleteActivityButton'
@@ -21,11 +22,13 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
     { data: comments },
     { data: attachments },
     { data: profile },
+    { data: tasks },
   ] = await Promise.all([
     supabase.from('activities').select('*, departments(name), profiles!created_by(full_name), pic:profiles!pic_id(full_name)').eq('id', id).single(),
     supabase.from('comments').select('*, profiles(full_name, role)').eq('activity_id', id).order('created_at'),
     supabase.from('attachments').select('*, profiles(full_name)').eq('activity_id', id).order('created_at'),
     supabase.from('profiles').select('*, departments(name)').eq('id', user.id).single(),
+    supabase.from('tasks').select('*, profiles(full_name)').eq('activity_id', id).order('created_at'),
   ])
 
   if (!activity) notFound()
@@ -103,8 +106,16 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="detail">
+      <Tabs defaultValue="tasks">
         <TabsList className="w-full">
+          <TabsTrigger value="tasks" className="flex-1">
+            Pekerjaan
+            {(tasks?.length ?? 0) > 0 && (
+              <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'var(--blue-light)', color: 'var(--blue)' }}>
+                {tasks?.filter((t) => t.status === 'done').length}/{tasks?.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="detail"      className="flex-1">Detail</TabsTrigger>
           <TabsTrigger value="comments"    className="flex-1">
             Komentar
@@ -123,6 +134,14 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             )}
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="tasks" className="mt-4">
+          <TaskList
+            activityId={id}
+            tasks={(tasks as Task[]) ?? []}
+            currentUser={currentUser}
+          />
+        </TabsContent>
 
         <TabsContent value="detail" className="mt-4 space-y-4">
           {act.description ? (

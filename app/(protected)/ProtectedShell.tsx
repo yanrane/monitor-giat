@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { NotificationBell } from '@/components/NotificationBell'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Scale, LayoutDashboard, Building2, Calendar, Bell, Shield, LogOut, ClipboardList, Users } from 'lucide-react'
+import { Scale, LayoutDashboard, Building2, Calendar, Bell, Shield, LogOut, ClipboardList, Users, Receipt, CheckSquare, FolderOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ProtectedShellProps {
@@ -40,7 +40,10 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
     ...(!isKadiv ? [{ href: `/departments/${profile.dept_id}`, icon: Building2, label: 'Kegiatan' }] : []),
     ...(!isKadiv ? [{ href: '/daily-log', icon: ClipboardList, label: 'Log Harian' }] : []),
     ...(isKadiv || isDeptHead ? [{ href: '/monitor', icon: Users, label: 'Monitor Tim' }] : []),
+    { href: '/tasks', icon: CheckSquare, label: 'Pekerjaan' },
+    { href: '/administrasi', icon: FolderOpen, label: 'Administrasi' },
     { href: '/calendar', icon: Calendar, label: 'Kalender' },
+    { href: '/expenses', icon: Receipt, label: 'Pengeluaran' },
     { href: '/notifications', icon: Bell, label: 'Notifikasi' },
     ...(isKadiv ? [{ href: '/admin', icon: Shield, label: 'Kelola Akun' }] : []),
   ]

@@ -1,5 +1,7 @@
 export type Role = 'kadiv' | 'dept_head' | 'staff'
 export type ActivityStatus = 'belum_mulai' | 'berjalan' | 'selesai' | 'ditunda'
+export type TaskStatus = 'pending' | 'done'
+export type ExpenseCategory = 'tiket' | 'honor' | 'hotel' | 'lainnya'
 export type NotificationType = 'status_change' | 'new_comment' | 'deadline_reminder'
 
 export interface Department {
@@ -34,6 +36,7 @@ export interface Activity {
   departments?: Department
   profiles?: Profile
   pic?: Profile
+  tasks?: Pick<Task, 'id' | 'status'>[]
 }
 
 export interface DailyLog {
@@ -63,6 +66,35 @@ export interface Attachment {
   uploaded_by: string
   created_at: string
   profiles?: Profile
+}
+
+export interface Task {
+  id: string
+  activity_id: string
+  title: string
+  due_date: string | null
+  status: TaskStatus
+  notes: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+  profiles?: Profile
+}
+
+export interface Expense {
+  id: string
+  category: ExpenseCategory
+  description: string
+  amount: number
+  expense_date: string
+  recipient_name: string | null
+  created_by: string
+  dept_id: string | null
+  attachment_url: string | null
+  created_at: string
+  updated_at: string
+  profiles?: Profile
+  departments?: Department
 }
 
 export interface Notification {
@@ -103,4 +135,18 @@ export const DEPT_BG_COLORS: Record<string, string> = {
   'Non-Litigasi': '#4f46e5',
   'Konsultasi & Legal Opinion': '#0891b2',
   'Asset Dispute': '#ea580c',
+}
+
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  tiket: 'Tiket Transportasi',
+  honor: 'Pembayaran Honor',
+  hotel: 'Akomodasi Hotel',
+  lainnya: 'Pengeluaran Lainnya',
+}
+
+export const EXPENSE_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+  tiket: '#0891b2',
+  honor: '#7c3aed',
+  hotel: '#059669',
+  lainnya: '#d97706',
 }
