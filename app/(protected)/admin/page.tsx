@@ -27,7 +27,7 @@ export default async function AdminPage() {
   if (currentProfile?.role !== 'kadiv') redirect('/dashboard')
 
   const [{ data: profiles }, { data: departments }] = await Promise.all([
-    supabase.from('profiles').select('*, departments(name)').order('role').order('full_name'),
+    supabase.from('profiles').select('*, departments(name)').eq('is_active', true).order('role').order('full_name'),
     supabase.from('departments').select('*').order('name'),
   ])
 

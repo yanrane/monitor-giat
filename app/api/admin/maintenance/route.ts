@@ -61,46 +61,26 @@ export async function POST(request: NextRequest) {
     if (adeError || !ade) {
       results.remove_ade_trisnani_wijaya = { ok: false, error: adeError?.message ?? 'User not found' }
     } else {
-      const activityTransfer = await admin
-        .from('activities')
-        .update({ created_by: kadivProfile.id })
-        .eq('created_by', ade.id)
-        .select('id')
-
-      const picClear = await admin
-        .from('activities')
-        .update({ pic_id: null })
-        .eq('pic_id', ade.id)
-        .select('id')
-
-      const dailyLogDelete = await admin
-        .from('daily_logs')
-        .delete()
-        .eq('user_id', ade.id)
-        .select('id')
-
-      const profileDelete = await admin
+      // Important: do NOT delete historical reports/logs/activities.
+      // Ade has moved division, so we only remove her from active Legal membership.
+      // Historical records should remain auditable.
+      const profileDeactivate = await admin
         .from('profiles')
-        .delete()
+        .update({ is_active: false, dept_id: null })
         .eq('id', ade.id)
-        .select('id, full_name')
-
-      const authDelete = await admin.auth.admin.deleteUser(ade.id)
+        .select('id, full_name, is_active, dept_id')
 
       results.remove_ade_trisnani_wijaya = {
-        ok: !activityTransfer.error && !picClear.error && !dailyLogDelete.error && !profileDelete.error && !authDelete.error,
-        transferred_activities: activityTransfer.data?.length ?? 0,
-        cleared_pic_assignments: picClear.data?.length ?? 0,
-        deleted_daily_logs: dailyLogDelete.data?.length ?? 0,
-        deleted_profiles: profileDelete.data?.length ?? 0,
-        auth_user_deleted: !authDelete.error,
+        ok: !profileDeactivate.error,
+        mode: 'soft_deactivate_only',
+        preserved_history: true,
+        deleted_daily_logs: 0,
+        deleted_profiles: 0,
+        auth_user_deleted: false,
         errors: {
-          activities: activityTransfer.error?.message ?? null,
-          pic_assignments: picClear.error?.message ?? null,
-          daily_logs: dailyLogDelete.error?.message ?? null,
-          profile: profileDelete.error?.message ?? null,
-          auth: authDelete.error?.message ?? null,
+          profile: profileDeactivate.error?.message ?? null,
         },
+        profile: profileDeactivate.data?.[0] ?? null,
       }
     }
   }

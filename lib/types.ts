@@ -16,6 +16,7 @@ export interface Profile {
   full_name: string
   role: Role
   dept_id: string | null
+  is_active: boolean
   created_at: string
   departments?: Department
 }

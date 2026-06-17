@@ -44,8 +44,8 @@ export default function MonitorPage() {
 
     // Fetch members based on role
     const membersQuery = currentProfile.role === 'kadiv'
-      ? supabase.from('profiles').select('*, departments(*)').neq('role', 'kadiv').order('full_name')
-      : supabase.from('profiles').select('*, departments(*)').eq('dept_id', currentProfile.dept_id!).neq('id', user.id).order('full_name')
+      ? supabase.from('profiles').select('*, departments(*)').neq('role', 'kadiv').eq('is_active', true).order('full_name')
+      : supabase.from('profiles').select('*, departments(*)').eq('dept_id', currentProfile.dept_id!).neq('id', user.id).eq('is_active', true).order('full_name')
 
     const [{ data: members }, { data: logs }, { data: activities }] = await Promise.all([
       membersQuery,
