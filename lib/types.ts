@@ -2,7 +2,7 @@ export type Role = 'kadiv' | 'dept_head' | 'staff'
 export type ActivityStatus = 'belum_mulai' | 'berjalan' | 'selesai' | 'ditunda'
 export type TaskStatus = 'pending' | 'done'
 export type ExpenseCategory = 'tiket' | 'honor' | 'hotel' | 'lainnya'
-export type NotificationType = 'status_change' | 'new_comment' | 'deadline_reminder'
+export type NotificationType = 'status_change' | 'new_comment' | 'deadline_reminder' | 'briefing'
 
 export interface Department {
   id: string
@@ -149,4 +149,33 @@ export const EXPENSE_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
   honor: '#7c3aed',
   hotel: '#059669',
   lainnya: '#d97706',
+}
+
+// ── Daily Briefing ─────────────────────────────────────
+
+export interface BriefingViralNews {
+  title: string
+  url: string
+  source: string
+  summary: string
+  relevance_score: number // 0–10
+  category?: string
+}
+
+export interface BriefingEvaluation {
+  department: string
+  score: number // 1–10 (evaluasi performa)
+  strengths: string[]
+  issues: string[]
+  recommendation: string
+}
+
+export interface MorningBriefing {
+  id: string
+  briefing_date: string
+  viral_news: BriefingViralNews[]
+  evaluations: BriefingEvaluation[]
+  overall_insight: string
+  generated_by: string
+  created_at: string
 }

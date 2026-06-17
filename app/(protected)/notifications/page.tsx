@@ -4,24 +4,27 @@ import { createClient } from '@/lib/supabase/server'
 import { type Notification } from '@/lib/types'
 import { formatDateTime } from '@/lib/utils'
 import { MarkAllReadButton } from './MarkAllReadButton'
-import { Bell, BellRing, MessageSquare, Clock } from 'lucide-react'
+import { Bell, BellRing, MessageSquare, Clock, Newspaper } from 'lucide-react'
 
 const TYPE_ICONS = {
   status_change:     Bell,
   new_comment:       MessageSquare,
   deadline_reminder: Clock,
+  briefing:          Newspaper,
 }
 
 const TYPE_LABELS = {
   status_change:     'Perubahan Status',
   new_comment:       'Komentar Baru',
   deadline_reminder: 'Pengingat Tenggat',
+  briefing:          'Briefing Pagi',
 }
 
 const TYPE_COLORS = {
   status_change:     { bg: 'var(--navy-100)', color: 'var(--navy-600)' },
   new_comment:       { bg: 'var(--gold-100)', color: 'var(--gold-600)' },
   deadline_reminder: { bg: '#fef2f2',         color: '#dc2626'         },
+  briefing:          { bg: '#ecfdf5',         color: '#059669'         },
 }
 
 export default async function NotificationsPage() {
