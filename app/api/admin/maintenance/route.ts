@@ -67,6 +67,12 @@ export async function POST(request: NextRequest) {
         .eq('created_by', ade.id)
         .select('id')
 
+      const picClear = await admin
+        .from('activities')
+        .update({ pic_id: null })
+        .eq('pic_id', ade.id)
+        .select('id')
+
       const dailyLogDelete = await admin
         .from('daily_logs')
         .delete()
@@ -82,13 +88,15 @@ export async function POST(request: NextRequest) {
       const authDelete = await admin.auth.admin.deleteUser(ade.id)
 
       results.remove_ade_trisnani_wijaya = {
-        ok: !activityTransfer.error && !dailyLogDelete.error && !profileDelete.error && !authDelete.error,
+        ok: !activityTransfer.error && !picClear.error && !dailyLogDelete.error && !profileDelete.error && !authDelete.error,
         transferred_activities: activityTransfer.data?.length ?? 0,
+        cleared_pic_assignments: picClear.data?.length ?? 0,
         deleted_daily_logs: dailyLogDelete.data?.length ?? 0,
         deleted_profiles: profileDelete.data?.length ?? 0,
         auth_user_deleted: !authDelete.error,
         errors: {
           activities: activityTransfer.error?.message ?? null,
+          pic_assignments: picClear.error?.message ?? null,
           daily_logs: dailyLogDelete.error?.message ?? null,
           profile: profileDelete.error?.message ?? null,
           auth: authDelete.error?.message ?? null,
