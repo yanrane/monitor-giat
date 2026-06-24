@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { type Department } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { UserPlus } from 'lucide-react'
+import { inviteUser } from './actions'
 
 interface InviteUserFormProps {
   departments: Department[]
@@ -21,42 +21,20 @@ export function InviteUserForm({ departments }: InviteUserFormProps) {
   const [role, setRole] = useState<'dept_head' | 'staff'>('dept_head')
   const [deptId, setDeptId] = useState('')
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
     if (!deptId) { toast.error('Pilih departemen'); return }
     setLoading(true)
 
-    // Use Supabase admin invite - this requires service role in real setup
-    // For now, use signUp with auto-confirm
-    const tempPassword = Math.random().toString(36).slice(-10) + 'A1!'
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: tempPassword,
-      options: { data: { full_name: fullName } },
-    })
-
-    if (error || !data.user) {
-      toast.error(`Gagal membuat akun: ${error?.message}`)
+    const { error } = await inviteUser(email, fullName, role, deptId)
+    if (error) {
+      toast.error(`Gagal membuat akun: ${error}`)
       setLoading(false)
       return
     }
 
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      full_name: fullName,
-      role,
-      dept_id: deptId,
-    })
-
-    if (profileError) {
-      toast.error('Gagal membuat profil pengguna')
-      setLoading(false)
-      return
-    }
-
-    toast.success(`Akun berhasil dibuat. Sampaikan ke ${email} untuk ganti password.`)
+    toast.success(`Akun berhasil dibuat. Email reset password dikirim ke ${email}.`)
     setEmail(''); setFullName(''); setDeptId('')
     setLoading(false)
   }
