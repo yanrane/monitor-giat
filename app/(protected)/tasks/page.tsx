@@ -150,7 +150,6 @@ function TaskGroup({ title, badgeColor, badgeBg, borderColor, tasks, canToggle, 
                 href={`/activities/${task.activity_id}`}
                 className="hidden sm:flex items-center gap-1 text-xs group truncate pr-2"
                 style={{ color: 'var(--text-muted)' }}
-                onClick={(e) => e.stopPropagation()}
               >
                 <span className="truncate group-hover:underline">{task.activities?.title}</span>
                 <ExternalLink size={10} className="shrink-0 opacity-0 group-hover:opacity-60" />
