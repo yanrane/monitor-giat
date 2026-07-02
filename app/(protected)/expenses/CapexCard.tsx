@@ -1,4 +1,4 @@
-import { Landmark } from 'lucide-react'
+import { Landmark, ChevronDown } from 'lucide-react'
 import { CAPEX_ITEMS, CAPEX_TITLE, CAPEX_TOTAL, CAPEX_YEAR } from './capex'
 
 function formatRupiah(amount: number) {
@@ -50,17 +50,31 @@ export function CapexCard({ totalSpent = 0 }: { totalSpent?: number }) {
         )}
       </div>
 
-      {/* Rincian item pagu */}
-      <div className="divide-y divide-[--cream-border]">
-        {CAPEX_ITEMS.map((item, i) => (
-          <div key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
-            <p className="text-sm min-w-0" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
-            <p className="text-sm font-semibold shrink-0" style={{ color: 'var(--navy-900)' }}>
-              {formatRupiah(item.amount)}
-            </p>
-          </div>
-        ))}
-      </div>
+      {/* Rincian item pagu (dropdown) */}
+      <details className="group">
+        <summary
+          className="flex items-center justify-between px-4 py-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden transition-colors hover:bg-gray-50"
+        >
+          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Rincian Pagu per Item ({CAPEX_ITEMS.length})
+          </span>
+          <ChevronDown
+            size={16}
+            className="shrink-0 transition-transform group-open:rotate-180"
+            style={{ color: 'var(--text-muted)' }}
+          />
+        </summary>
+        <div className="divide-y divide-[--cream-border]" style={{ borderTop: '1px solid var(--cream-border)' }}>
+          {CAPEX_ITEMS.map((item, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <p className="text-sm min-w-0" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
+              <p className="text-sm font-semibold shrink-0" style={{ color: 'var(--navy-900)' }}>
+                {formatRupiah(item.amount)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </details>
     </div>
   )
 }
