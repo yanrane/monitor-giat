@@ -4,7 +4,7 @@ import { type Profile, type ProgressItem } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { ProgressForm } from './ProgressForm'
 import { ProgressToggle, ProgressDelete } from './ProgressRowActions'
-import { TrendingUp, AlertTriangle, CheckCircle2, Clock } from 'lucide-react'
+import { TrendingUp, AlertTriangle, CheckCircle2, Clock, MessageCircle } from 'lucide-react'
 
 interface ItemWithPic extends ProgressItem {
   pic: Profile
@@ -81,7 +81,19 @@ export default async function ProgressPage() {
     people = (data ?? []) as unknown as Profile[]
   }
 
-  const gridCols = isKadiv ? '24px 1fr 180px 110px 110px 130px 32px' : '24px 1fr 180px 110px 110px 130px'
+  const gridCols = isKadiv ? '24px 1fr 180px 110px 110px 130px 64px' : '24px 1fr 180px 110px 110px 130px'
+
+  // Pesan siap-kirim WhatsApp untuk PIC (wa.me — Boss tinggal pilih kontak)
+  function waLink(item: ItemWithPic) {
+    const msg =
+      `Halo ${item.pic?.full_name ?? ''},\n\n` +
+      `Anda saya tugaskan pekerjaan:\n` +
+      `📋 ${item.title}\n` +
+      `🎯 Target selesai: ${formatDate(item.target_date)}\n\n` +
+      `Mohon ditindaklanjuti dan tandai selesai di aplikasi Monitor Kegiatan:\n` +
+      `https://monitor-giat.vercel.app/progress`
+    return `https://wa.me/?text=${encodeURIComponent(msg)}`
+  }
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -181,7 +193,21 @@ export default async function ProgressPage() {
                         {st.label}
                       </span>
                     </div>
-                    {isKadiv && <ProgressDelete itemId={item.id} />}
+                    {isKadiv && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <a
+                          href={waLink(item)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg transition-colors hover:bg-green-50"
+                          style={{ color: '#25D366' }}
+                          title="Kirim penugasan via WhatsApp"
+                        >
+                          <MessageCircle size={14} />
+                        </a>
+                        <ProgressDelete itemId={item.id} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Mobile meta */}
