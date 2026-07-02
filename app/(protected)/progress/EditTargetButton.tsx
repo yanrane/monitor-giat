@@ -8,19 +8,19 @@ import { Label } from '@/components/ui/label'
 import { updateProgressTarget } from './actions'
 
 interface EditTargetButtonProps {
-  itemId: string
+  itemIds: string[]
   title: string
   targetDate: string
 }
 
-export function EditTargetButton({ itemId, title, targetDate }: EditTargetButtonProps) {
+export function EditTargetButton({ itemIds, title, targetDate }: EditTargetButtonProps) {
   const [open, setOpen] = useState(false)
   const [date, setDate] = useState(targetDate)
   const [loading, setLoading] = useState(false)
 
   async function handleSave() {
     setLoading(true)
-    await updateProgressTarget(itemId, date)
+    await updateProgressTarget(itemIds, date)
     setLoading(false)
     setOpen(false)
   }

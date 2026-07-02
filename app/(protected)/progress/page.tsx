@@ -14,23 +14,34 @@ interface ItemWithPic extends ProgressItem {
   pic: Profile
 }
 
+// Multi-PIC disimpan satu baris DB per orang; di layar digabung 1 baris per pekerjaan
+interface Group {
+  title: string
+  target_date: string
+  members: ItemWithPic[]
+}
+
 function todayStr() {
   return new Date().toLocaleDateString('sv-SE')
 }
 
-// Status ketepatan waktu, dihitung dari target vs tanggal selesai
-function timelineStatus(item: ItemWithPic, today: string) {
-  if (item.status === 'done') {
-    const doneDate = item.completed_at
-      ? new Date(item.completed_at).toLocaleDateString('sv-SE')
-      : today
-    return doneDate <= item.target_date
-      ? { label: 'Tepat Waktu', color: '#059669', bg: '#f0fdf4' }
-      : { label: 'Selesai Terlambat', color: '#d97706', bg: '#fffbeb' }
+function doneDateStr(item: ItemWithPic, today: string) {
+  return item.completed_at ? new Date(item.completed_at).toLocaleDateString('sv-SE') : today
+}
+
+// Status gabungan per pekerjaan: ada yang belum selesai → Berjalan/Melewati Target;
+// semua selesai → Tepat Waktu, kecuali ada yang telat → Selesai Terlambat
+function groupStatus(group: Group, today: string) {
+  const pending = group.members.some((m) => m.status !== 'done')
+  if (pending) {
+    return group.target_date < today
+      ? { label: 'Melewati Target', color: '#dc2626', bg: '#fef2f2' }
+      : { label: 'Berjalan', color: '#2563eb', bg: '#eff6ff' }
   }
-  return item.target_date < today
-    ? { label: 'Melewati Target', color: '#dc2626', bg: '#fef2f2' }
-    : { label: 'Berjalan', color: '#2563eb', bg: '#eff6ff' }
+  const late = group.members.some((m) => doneDateStr(m, today) > group.target_date)
+  return late
+    ? { label: 'Selesai Terlambat', color: '#d97706', bg: '#fffbeb' }
+    : { label: 'Tepat Waktu', color: '#059669', bg: '#f0fdf4' }
 }
 
 // Pesan siap-kirim WhatsApp untuk PIC. Kalau nomor WA PIC terisi
@@ -71,10 +82,10 @@ function StatCard({ value, label, color, bg, icon, href, active }: {
   )
 }
 
-function ItemsTable({ items, isKadiv, userId, today, framed = true }: {
-  items: ItemWithPic[]; isKadiv: boolean; userId: string; today: string; framed?: boolean
+function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
+  groups: Group[]; isKadiv: boolean; userId: string; today: string; framed?: boolean
 }) {
-  const gridCols = isKadiv ? '24px 1fr 180px 110px 110px 130px 92px' : '24px 1fr 180px 110px 110px 130px'
+  const gridCols = isKadiv ? '24px 1fr 200px 110px 110px 130px 68px' : '24px 1fr 200px 110px 110px 130px'
 
   return (
     <div
@@ -101,36 +112,87 @@ function ItemsTable({ items, isKadiv, userId, today, framed = true }: {
       </div>
 
       <div className="divide-y divide-[--cream-border]">
-        {items.map((item) => {
-          const st = timelineStatus(item, today)
-          const isDone = item.status === 'done'
-          const canToggle = isKadiv || item.pic_id === userId
+        {groups.map((group) => {
+          const st = groupStatus(group, today)
+          const doneCount = group.members.filter((m) => m.status === 'done').length
+          const allDone = doneCount === group.members.length
+          const single = group.members.length === 1
+          const ids = group.members.map((m) => m.id)
+          const latestDone = allDone
+            ? group.members.reduce((max, m) => (m.completed_at && m.completed_at > max ? m.completed_at : max), '')
+            : ''
 
           return (
             <div
-              key={item.id}
+              key={ids[0]}
               className="px-4 py-3 flex flex-col gap-2 sm:grid sm:items-center sm:gap-3"
-              style={{ gridTemplateColumns: gridCols, background: isDone ? '#f9fafb' : 'white' }}
+              style={{ gridTemplateColumns: gridCols, background: allDone ? '#f9fafb' : 'white' }}
             >
               <div className="flex items-center gap-2.5 sm:contents">
-                <ProgressToggle itemId={item.id} status={item.status} canToggle={canToggle} />
+                {single ? (
+                  <ProgressToggle
+                    itemId={group.members[0].id}
+                    status={group.members[0].status}
+                    canToggle={isKadiv || group.members[0].pic_id === userId}
+                  />
+                ) : allDone ? (
+                  <CheckCircle2 size={18} className="shrink-0" style={{ color: '#10b981' }} />
+                ) : (
+                  <span className="w-[18px] shrink-0" />
+                )}
                 <p
                   className="text-sm min-w-0 flex-1 break-words"
                   style={{
-                    color: isDone ? '#9ca3af' : st.label === 'Melewati Target' ? '#991b1b' : 'var(--text-primary)',
-                    textDecoration: isDone ? 'line-through' : 'none',
+                    color: allDone ? '#9ca3af' : st.label === 'Melewati Target' ? '#991b1b' : 'var(--text-primary)',
+                    textDecoration: allDone ? 'line-through' : 'none',
                   }}
                 >
-                  {item.title}
+                  {group.title}
                 </p>
-                <p className="hidden sm:block text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                  {item.pic?.full_name ?? '—'}
+
+                {/* PIC — semua nama digabung satu kolom, centang per orang */}
+                <div className="hidden sm:flex flex-col gap-1 min-w-0">
+                  {group.members.map((m) => (
+                    <div key={m.id} className="flex items-center gap-1.5 min-w-0">
+                      {!single && (
+                        <span className="scale-75 origin-left shrink-0">
+                          <ProgressToggle itemId={m.id} status={m.status} canToggle={isKadiv || m.pic_id === userId} />
+                        </span>
+                      )}
+                      <span
+                        className="text-xs truncate"
+                        style={{
+                          color: 'var(--text-muted)',
+                          textDecoration: !single && m.status === 'done' ? 'line-through' : 'none',
+                        }}
+                      >
+                        {m.pic?.full_name ?? '—'}
+                      </span>
+                      {isKadiv && (
+                        <a
+                          href={waLink(m)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 transition-opacity hover:opacity-70"
+                          style={{ color: '#25D366' }}
+                          title={`Kirim penugasan via WhatsApp ke ${m.pic?.full_name ?? 'PIC'}`}
+                        >
+                          <MessageCircle size={12} />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <p className="hidden sm:block text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {formatDate(group.target_date)}
                 </p>
                 <p className="hidden sm:block text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {formatDate(item.target_date)}
-                </p>
-                <p className="hidden sm:block text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {item.completed_at ? formatDate(item.completed_at) : '—'}
+                  {allDone && latestDone
+                    ? formatDate(latestDone)
+                    : doneCount > 0
+                      ? `${doneCount}/${group.members.length} ✓`
+                      : '—'}
                 </p>
                 <div className="hidden sm:block">
                   <span
@@ -142,40 +204,55 @@ function ItemsTable({ items, isKadiv, userId, today, framed = true }: {
                 </div>
                 {isKadiv && (
                   <div className="flex items-center gap-1 shrink-0">
-                    <EditTargetButton itemId={item.id} title={item.title} targetDate={item.target_date} />
-                    <a
-                      href={waLink(item)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1.5 rounded-lg transition-colors hover:bg-green-50"
-                      style={{ color: '#25D366' }}
-                      title="Kirim penugasan via WhatsApp"
-                    >
-                      <MessageCircle size={14} />
-                    </a>
-                    <ProgressDelete itemId={item.id} />
+                    <EditTargetButton itemIds={ids} title={group.title} targetDate={group.target_date} />
+                    <ProgressDelete itemIds={ids} />
                   </div>
                 )}
               </div>
 
               {/* Mobile meta */}
-              <div className="flex items-center gap-2 flex-wrap sm:hidden pl-[30px]">
-                <span
-                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                  style={{ color: st.color, background: st.bg }}
-                >
-                  {st.label}
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {item.pic?.full_name ?? '—'} · Target {formatDate(item.target_date)}
-                  {item.completed_at && ` · Selesai ${formatDate(item.completed_at)}`}
-                </span>
+              <div className="flex flex-col gap-1.5 sm:hidden pl-[30px]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ color: st.color, background: st.bg }}
+                  >
+                    {st.label}
+                  </span>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    Target {formatDate(group.target_date)}
+                    {allDone && latestDone && ` · Selesai ${formatDate(latestDone)}`}
+                  </span>
+                </div>
+                {group.members.map((m) => (
+                  <div key={m.id} className="flex items-center gap-1.5">
+                    {!single && (
+                      <span className="scale-75 origin-left shrink-0">
+                        <ProgressToggle itemId={m.id} status={m.status} canToggle={isKadiv || m.pic_id === userId} />
+                      </span>
+                    )}
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {m.pic?.full_name ?? '—'}
+                    </span>
+                    {isKadiv && (
+                      <a
+                        href={waLink(m)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#25D366' }}
+                        title={`Kirim penugasan via WhatsApp ke ${m.pic?.full_name ?? 'PIC'}`}
+                      >
+                        <MessageCircle size={12} />
+                      </a>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )
         })}
 
-        {items.length === 0 && (
+        {groups.length === 0 && (
           <p className="px-4 py-6 text-sm text-center" style={{ color: 'var(--text-muted)' }}>
             Tidak ada item pada kategori ini.
           </p>
@@ -215,20 +292,29 @@ export default async function ProgressPage({ searchParams }: {
   const allItems = (items ?? []) as unknown as ItemWithPic[]
   const today = todayStr()
 
-  const running  = allItems.filter(i => i.status === 'pending' && i.target_date >= today)
-  const overdue  = allItems.filter(i => i.status === 'pending' && i.target_date < today)
-  const onTime   = allItems.filter(i => timelineStatus(i, today).label === 'Tepat Waktu')
-  const lateDone = allItems.filter(i => timelineStatus(i, today).label === 'Selesai Terlambat')
+  // Gabung baris multi-PIC: satu pekerjaan = judul + target sama
+  const groupMap = new Map<string, Group>()
+  for (const item of allItems) {
+    const key = `${item.title}|${item.target_date}`
+    if (!groupMap.has(key)) groupMap.set(key, { title: item.title, target_date: item.target_date, members: [] })
+    groupMap.get(key)!.members.push(item)
+  }
+  const allGroups = [...groupMap.values()]
 
-  const byFilter: Record<FilterKey, ItemWithPic[]> = {
+  const running  = allGroups.filter((g) => groupStatus(g, today).label === 'Berjalan')
+  const overdue  = allGroups.filter((g) => groupStatus(g, today).label === 'Melewati Target')
+  const onTime   = allGroups.filter((g) => groupStatus(g, today).label === 'Tepat Waktu')
+  const lateDone = allGroups.filter((g) => groupStatus(g, today).label === 'Selesai Terlambat')
+
+  const byFilter: Record<FilterKey, Group[]> = {
     berjalan: running, melewati: overdue, tepat: onTime, terlambat: lateDone,
   }
 
   const rawFilter = (await searchParams).filter
   const filter: FilterKey | null = rawFilter && rawFilter in FILTERS ? rawFilter as FilterKey : null
 
-  const activeItems = [...overdue, ...running]
-  const doneItems = allItems.filter(i => i.status === 'done')
+  const activeGroups = [...overdue, ...running]
+  const doneGroups = [...onTime, ...lateDone]
 
   // Daftar PIC untuk form (semua user selain kadiv)
   let people: Profile[] = []
@@ -272,7 +358,7 @@ export default async function ProgressPage({ searchParams }: {
       {/* Form input (Kadiv only) */}
       {isKadiv && <ProgressForm people={people} />}
 
-      {allItems.length === 0 ? (
+      {allGroups.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl" style={{ border: '1px solid var(--cream-border)' }}>
           <TrendingUp size={36} className="mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
           <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Belum ada item pekerjaan</p>
@@ -290,14 +376,14 @@ export default async function ProgressPage({ searchParams }: {
               Tampilkan semua
             </Link>
           </div>
-          <ItemsTable items={byFilter[filter]} isKadiv={isKadiv} userId={user.id} today={today} />
+          <GroupsTable groups={byFilter[filter]} isKadiv={isKadiv} userId={user.id} today={today} />
         </div>
       ) : (
         <>
-          <ItemsTable items={activeItems} isKadiv={isKadiv} userId={user.id} today={today} />
-          {doneItems.length > 0 && (
-            <Collapsible title={`Selesai (${doneItems.length})`}>
-              <ItemsTable items={doneItems} isKadiv={isKadiv} userId={user.id} today={today} framed={false} />
+          <GroupsTable groups={activeGroups} isKadiv={isKadiv} userId={user.id} today={today} />
+          {doneGroups.length > 0 && (
+            <Collapsible title={`Selesai (${doneGroups.length})`}>
+              <GroupsTable groups={doneGroups} isKadiv={isKadiv} userId={user.id} today={today} framed={false} />
             </Collapsible>
           )}
         </>

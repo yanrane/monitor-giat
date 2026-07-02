@@ -72,30 +72,33 @@ export async function toggleProgressItem(id: string, currentStatus: string) {
   revalidatePath('/progress')
 }
 
-export async function updateProgressTarget(id: string, targetDate: string) {
-  if (!targetDate) return
+// ids = semua baris satu pekerjaan (multi-PIC digabung tampil 1 baris)
+export async function updateProgressTarget(ids: string[], targetDate: string) {
+  if (!targetDate || ids.length === 0) return
   const supabase = await createClient()
   const { data: updated } = await supabase.from('progress_items')
     .update({ target_date: targetDate })
-    .eq('id', id)
+    .in('id', ids)
     .select('title, pic_id')
-    .single()
 
-  // Kabari PIC bahwa target pekerjaannya direvisi
-  if (updated && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    await createAdminClient().from('notifications').insert({
-      user_id: updated.pic_id,
-      title: 'Target pekerjaan direvisi',
-      message: `Target selesai "${updated.title}" diubah menjadi ${formatDate(targetDate)}.`,
-      type: 'status_change',
-    })
+  // Kabari tiap PIC bahwa target pekerjaannya direvisi
+  if (updated && updated.length > 0 && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    await createAdminClient().from('notifications').insert(
+      updated.map((row) => ({
+        user_id: row.pic_id,
+        title: 'Target pekerjaan direvisi',
+        message: `Target selesai "${row.title}" diubah menjadi ${formatDate(targetDate)}.`,
+        type: 'status_change',
+      }))
+    )
   }
 
   revalidatePath('/progress')
 }
 
-export async function deleteProgressItem(id: string) {
+export async function deleteProgressItem(ids: string[]) {
+  if (ids.length === 0) return
   const supabase = await createClient()
-  await supabase.from('progress_items').delete().eq('id', id)
+  await supabase.from('progress_items').delete().in('id', ids)
   revalidatePath('/progress')
 }

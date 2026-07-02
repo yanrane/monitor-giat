@@ -37,13 +37,16 @@ export function ProgressToggle({ itemId, status, canToggle }: Omit<ProgressRowAc
   )
 }
 
-export function ProgressDelete({ itemId }: { itemId: string }) {
+export function ProgressDelete({ itemIds }: { itemIds: string[] }) {
   const [loading, setLoading] = useState(false)
 
   async function handleDelete() {
-    if (!confirm('Hapus item pekerjaan ini?')) return
+    const msg = itemIds.length > 1
+      ? `Hapus item pekerjaan ini untuk ${itemIds.length} PIC sekaligus?`
+      : 'Hapus item pekerjaan ini?'
+    if (!confirm(msg)) return
     setLoading(true)
-    await deleteProgressItem(itemId)
+    await deleteProgressItem(itemIds)
   }
 
   if (loading) return <Loader2 size={14} className="animate-spin shrink-0" style={{ color: '#9ca3af' }} />
