@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { type Profile, type DailyLog, type Department } from '@/lib/types'
-import { ChevronLeft, ChevronRight, Users, CheckCircle2, XCircle, BarChart2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Users, CheckCircle2, XCircle, BarChart2, MapPin } from 'lucide-react'
 
 function toLocalDateString(date: Date) {
   return date.toLocaleDateString('sv-SE')
@@ -219,7 +219,7 @@ export default function MonitorPage() {
                           </div>
                           {member.log ? (
                             <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>
-                              {member.log.content}
+                              {member.log.location ? `📍 ${member.log.location} — ` : ''}{member.log.content}
                             </p>
                           ) : (
                             <p className="text-xs mt-0.5" style={{ color: '#dc2626' }}>Belum mengisi log</p>
@@ -249,6 +249,12 @@ export default function MonitorPage() {
                         style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', borderTop: 'none' }}
                       >
                         <p className="text-xs font-bold mb-1.5" style={{ color: '#065f46' }}>Log Harian</p>
+                        {member.log.location && (
+                          <p className="flex items-center gap-1.5 text-xs font-semibold mb-1.5" style={{ color: '#065f46' }}>
+                            <MapPin size={12} className="shrink-0" />
+                            {member.log.location}
+                          </p>
+                        )}
                         <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#065f46' }}>
                           {member.log.content}
                         </p>

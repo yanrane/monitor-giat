@@ -47,6 +47,7 @@ export interface DailyLog {
   user_id: string
   log_date: string
   content: string
+  location: string | null
   created_at: string
   updated_at: string
   profiles?: Profile

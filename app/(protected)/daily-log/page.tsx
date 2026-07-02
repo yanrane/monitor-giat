@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { type DailyLog } from '@/lib/types'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Pencil, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Pencil, CheckCircle2, MapPin } from 'lucide-react'
 
 function toLocalDateString(date: Date) {
   return date.toLocaleDateString('sv-SE') // YYYY-MM-DD in local timezone
@@ -21,6 +21,7 @@ export default function DailyLogPage() {
   const supabase = createClient()
   const [selectedDate, setSelectedDate] = useState(toLocalDateString(new Date()))
   const [content, setContent] = useState('')
+  const [location, setLocation] = useState('')
   const [existingLog, setExistingLog] = useState<DailyLog | null>(null)
   const [recentLogs, setRecentLogs] = useState<DailyLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,6 +42,7 @@ export default function DailyLogPage() {
 
     setExistingLog(log as DailyLog | null)
     setContent(log?.content ?? '')
+    setLocation(log?.location ?? '')
     setEditing(!log)
     setRecentLogs(recent as DailyLog[] ?? [])
     setLoading(false)
@@ -50,13 +52,15 @@ export default function DailyLogPage() {
 
   async function handleSave() {
     if (!content.trim()) { toast.error('Isi log tidak boleh kosong'); return }
+    if (!location.trim()) { toast.error('Lokasi tidak boleh kosong'); return }
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const payload = { content, location: location.trim() }
     const { error } = existingLog
-      ? await supabase.from('daily_logs').update({ content }).eq('id', existingLog.id)
-      : await supabase.from('daily_logs').insert({ user_id: user.id, log_date: selectedDate, content })
+      ? await supabase.from('daily_logs').update(payload).eq('id', existingLog.id)
+      : await supabase.from('daily_logs').insert({ user_id: user.id, log_date: selectedDate, ...payload })
 
     if (error) {
       toast.error('Gagal menyimpan log')
@@ -146,6 +150,12 @@ export default function DailyLogPage() {
               <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
                 {existingLog.content}
               </p>
+              {existingLog.location && (
+                <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  <MapPin size={12} />
+                  {existingLog.location}
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
@@ -175,10 +185,36 @@ export default function DailyLogPage() {
                   e.target.style.boxShadow = 'none'
                 }}
               />
+              <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Lokasi
+              </label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Contoh: Kantor Pusat Pangkalpinang, PN Jakarta Selatan, WFH..."
+                className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all"
+                style={{
+                  background: 'var(--gray-100)',
+                  border: '1px solid var(--gray-300)',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'inherit',
+                }}
+                onFocus={(e) => {
+                  e.target.style.background = 'white'
+                  e.target.style.borderColor = 'var(--blue)'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(0,113,227,0.15)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.background = 'var(--gray-100)'
+                  e.target.style.borderColor = 'var(--gray-300)'
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
               <div className="flex gap-2">
                 {existingLog && (
                   <button
-                    onClick={() => { setEditing(false); setContent(existingLog.content) }}
+                    onClick={() => { setEditing(false); setContent(existingLog.content); setLocation(existingLog.location ?? '') }}
                     className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
                     style={{ border: '1px solid var(--gray-300)', color: 'var(--text-secondary)', background: 'var(--gray-100)' }}
                   >
@@ -232,6 +268,12 @@ export default function DailyLogPage() {
                 <p className="text-sm leading-snug line-clamp-2" style={{ color: 'var(--text-primary)' }}>
                   {log.content}
                 </p>
+                {log.location && (
+                  <p className="flex items-center gap-1 text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                    <MapPin size={11} className="shrink-0" />
+                    {log.location}
+                  </p>
+                )}
               </button>
             ))}
           </div>
