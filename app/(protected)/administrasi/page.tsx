@@ -7,6 +7,7 @@ import { BudgetCard } from '../expenses/BudgetCard'
 import { CapexCard } from '../expenses/CapexCard'
 import { SectionDivider } from '@/components/SectionDivider'
 import { CapexForm } from './CapexForm'
+import { Collapsible } from '@/components/Collapsible'
 import { formatDate } from '@/lib/utils'
 import { Plane, Users, Hotel, MoreHorizontal, Receipt, ArrowRight } from 'lucide-react'
 
@@ -207,37 +208,32 @@ export default async function AdministrasiPage() {
       {/* Input pengeluaran CAPEX (staf/dept head) */}
       {canInput && <CapexForm />}
 
-      {/* Daftar pengeluaran CAPEX */}
-      {capexList.length === 0 ? (
-        <div
-          className="rounded-2xl px-4 py-8 text-center"
-          style={{ border: '1px solid var(--cream-border)', background: 'white' }}
-        >
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Belum ada pengeluaran CAPEX. Input lewat halaman Laporan Pengeluaran → pilih Jenis Anggaran "CAPEX".
+      {/* Daftar pengeluaran CAPEX (dropdown) */}
+      <Collapsible title={`Daftar Pengeluaran CAPEX — Pengurusan HGB (${capexList.length} entri)`}>
+        {capexList.length === 0 ? (
+          <p className="text-sm text-center py-4" style={{ color: 'var(--text-muted)' }}>
+            Belum ada pengeluaran CAPEX. Input lewat kartu "Input Pengeluaran CAPEX" di atas.
           </p>
-        </div>
-      ) : (
-        <div
-          className="rounded-2xl overflow-hidden bg-white divide-y divide-[--cream-border]"
-          style={{ border: '1px solid var(--cream-border)' }}
-        >
-          {capexList.map((e) => (
-            <div key={e.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-              <div className="min-w-0">
-                <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{e.description}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  {formatDate(e.expense_date)}
-                  {e.recipient_name && ` · ${e.recipient_name}`}
+        ) : (
+          <div className="divide-y divide-[--cream-border]">
+            {capexList.map((e) => (
+              <div key={e.id} className="flex items-center justify-between gap-3 px-1 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{e.description}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    {formatDate(e.expense_date)}
+                    {e.recipient_name && ` · ${e.recipient_name}`}
+                    {' · '}Pengurusan HGB
+                  </p>
+                </div>
+                <p className="text-sm font-semibold shrink-0" style={{ color: 'var(--navy-900)' }}>
+                  {formatRupiah(e.amount)}
                 </p>
               </div>
-              <p className="text-sm font-semibold shrink-0" style={{ color: 'var(--navy-900)' }}>
-                {formatRupiah(e.amount)}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </Collapsible>
 
       {!isKadiv && (
         <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>

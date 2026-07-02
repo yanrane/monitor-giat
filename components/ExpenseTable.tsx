@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Trash2, Loader2, Plane, Users, Hotel, MoreHorizontal } from 'lucide-react'
+import { Trash2, Loader2, Plane, Users, Hotel, MoreHorizontal, Landmark } from 'lucide-react'
 import { type Expense, type ExpenseCategory, EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_COLORS } from '@/lib/types'
 import { deleteExpense } from '@/app/(protected)/expenses/actions'
 
@@ -123,8 +123,11 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId, hideSummary = f
 
         <div className="bg-white divide-y divide-[--cream-border]">
           {expenses.map((expense) => {
-            const Icon  = CATEGORY_ICONS[expense.category as ExpenseCategory]
-            const color = EXPENSE_CATEGORY_COLORS[expense.category as ExpenseCategory]
+            // Baris CAPEX: kategori tampil "Pengurusan HGB", keterangan tidak dipotong
+            const isCapex = expense.budget_type === 'capex'
+            const Icon  = isCapex ? Landmark : CATEGORY_ICONS[expense.category as ExpenseCategory]
+            const color = isCapex ? '#475569' : EXPENSE_CATEGORY_COLORS[expense.category as ExpenseCategory]
+            const catLabel = isCapex ? 'Pengurusan HGB' : EXPENSE_CATEGORY_LABELS[expense.category as ExpenseCategory]
             const canDel = isKadiv || expense.created_by === currentUserId
 
             return (
@@ -137,7 +140,11 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId, hideSummary = f
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     {formatDate(expense.expense_date)}
                   </span>
-                  <span className="text-sm truncate pr-3" style={{ color: 'var(--text-primary)' }}>
+                  <span
+                    className={`text-sm pr-3 ${isCapex ? '' : 'truncate'}`}
+                    title={expense.description}
+                    style={{ color: 'var(--text-primary)' }}
+                  >
                     {expense.description}
                   </span>
                   <span className="text-xs truncate pr-3" style={{ color: 'var(--text-muted)' }}>
@@ -146,7 +153,7 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId, hideSummary = f
                   <div className="flex items-center gap-1.5">
                     <Icon size={12} style={{ color }} />
                     <span className="text-xs font-medium" style={{ color }}>
-                      {EXPENSE_CATEGORY_LABELS[expense.category as ExpenseCategory]}
+                      {catLabel}
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-right" style={{ color: 'var(--text-primary)' }}>
@@ -172,14 +179,14 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId, hideSummary = f
                 <div className="sm:hidden px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                      <p className={`text-sm font-medium ${isCapex ? '' : 'truncate'}`} style={{ color: 'var(--text-primary)' }}>
                         {expense.description}
                       </p>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
                         <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(expense.expense_date)}</span>
                         <span className="flex items-center gap-1 text-xs" style={{ color }}>
                           <Icon size={11} />
-                          {EXPENSE_CATEGORY_LABELS[expense.category as ExpenseCategory]}
+                          {catLabel}
                         </span>
                         {expense.recipient_name && (
                           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{expense.recipient_name}</span>

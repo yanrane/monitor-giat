@@ -5,6 +5,7 @@ import { ExpenseTable } from '@/components/ExpenseTable'
 import { BudgetCard } from './BudgetCard'
 import { CapexCard } from './CapexCard'
 import { SectionDivider } from '@/components/SectionDivider'
+import { Collapsible } from '@/components/Collapsible'
 import { type Expense, type Profile } from '@/lib/types'
 import { Receipt } from 'lucide-react'
 
@@ -80,23 +81,27 @@ export default async function ExpensesPage() {
       {/* ══ SEKSI ANGGARAN OPEX ══ */}
       <SectionDivider label="Anggaran OPEX — Operasional" />
       {canViewBudget && <BudgetCard pagu={pagu} totalSpent={opexTotal} />}
-      <ExpenseTable
-        expenses={opexList}
-        isKadiv={isKadiv}
-        currentUserId={user.id}
-        emptyText="Belum ada pengeluaran OPEX."
-      />
+      <Collapsible title={`Daftar Pengeluaran OPEX (${opexList.length} entri)`}>
+        <ExpenseTable
+          expenses={opexList}
+          isKadiv={isKadiv}
+          currentUserId={user.id}
+          emptyText="Belum ada pengeluaran OPEX."
+        />
+      </Collapsible>
 
       {/* ══ SEKSI ANGGARAN CAPEX ══ */}
       <SectionDivider label="Anggaran CAPEX — Perpanjangan & Pembaharuan HGB" />
       {canViewBudget && <CapexCard totalSpent={capexTotal} />}
-      <ExpenseTable
-        expenses={capexList}
-        isKadiv={isKadiv}
-        currentUserId={user.id}
-        hideSummary
-        emptyText="Belum ada pengeluaran CAPEX."
-      />
+      <Collapsible title={`Daftar Pengeluaran CAPEX — Pengurusan HGB (${capexList.length} entri)`}>
+        <ExpenseTable
+          expenses={capexList}
+          isKadiv={isKadiv}
+          currentUserId={user.id}
+          hideSummary
+          emptyText="Belum ada pengeluaran CAPEX."
+        />
+      </Collapsible>
     </div>
   )
 }
