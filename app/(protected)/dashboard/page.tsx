@@ -122,13 +122,6 @@ export default async function DashboardPage() {
                 {overdueT.length + todayT.length}
               </span>
             </div>
-            <Link
-              href="/tasks"
-              className="flex items-center gap-1 text-xs font-semibold transition-opacity hover:opacity-70"
-              style={{ color: '#dc2626' }}
-            >
-              Lihat semua <ArrowRight size={12} />
-            </Link>
           </div>
 
           {/* Column headers */}
@@ -186,48 +179,6 @@ export default async function DashboardPage() {
             })}
           </div>
 
-          {(overdueT.length + todayT.length) > 8 && (
-            <Link
-              href="/tasks"
-              className="flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors hover:bg-red-50"
-              style={{ color: '#dc2626', borderTop: '1px solid #fecaca', background: '#fff1f1' }}
-            >
-              <ClipboardList size={12} />
-              Lihat {(overdueT.length + todayT.length) - 8} pekerjaan lainnya
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* ── Task progress bar row ─────────────────────────── */}
-      {pending.length > 0 && (
-        <div
-          className="flex items-center justify-between rounded-2xl px-4 py-3"
-          style={{ background: 'var(--surface)', border: '1px solid var(--cream-border)' }}
-        >
-          <div className="flex items-center gap-2.5">
-            <Clock size={14} style={{ color: 'var(--text-muted)' }} />
-            <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {pending.length} pekerjaan pending
-            </span>
-            {overdueT.length > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: '#fef2f2', color: '#dc2626' }}>
-                {overdueT.length} terlambat
-              </span>
-            )}
-            {todayT.length > 0 && (
-              <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: '#fffbeb', color: '#d97706' }}>
-                {todayT.length} hari ini
-              </span>
-            )}
-          </div>
-          <Link
-            href="/tasks"
-            className="flex items-center gap-1 text-xs font-semibold transition-opacity hover:opacity-70"
-            style={{ color: 'var(--blue)' }}
-          >
-            Tracker Pekerjaan <ArrowRight size={12} />
-          </Link>
         </div>
       )}
 
