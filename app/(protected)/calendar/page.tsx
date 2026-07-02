@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { type Activity } from '@/lib/types'
+import { type ProgressItem } from '@/lib/types'
 import { CalendarView } from '@/components/CalendarView'
 
 export default async function CalendarPage() {
@@ -8,19 +8,20 @@ export default async function CalendarPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('role, dept_id').eq('id', user.id).single()
-
-  let query = supabase.from('activities').select('*, departments(name)')
-  if (profile?.role !== 'kadiv' && profile?.dept_id) {
-    query = query.eq('dept_id', profile.dept_id)
-  }
-
-  const { data: activities } = await query.order('start_date')
+  const { data: items } = await supabase
+    .from('progress_items')
+    .select('*, pic:profiles!progress_items_pic_id_fkey(id, full_name)')
+    .order('target_date')
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">Kalender Kegiatan</h1>
-      <CalendarView activities={activities as Activity[] ?? []} />
+      <div>
+        <h1 className="text-xl font-bold">Kalender Monitor Progress</h1>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          Target selesai pekerjaan dari Monitor Progress
+        </p>
+      </div>
+      <CalendarView items={items as ProgressItem[] ?? []} />
     </div>
   )
 }

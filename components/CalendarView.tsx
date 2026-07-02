@@ -5,7 +5,7 @@ import { Calendar, dateFnsLocalizer, type View } from 'react-big-calendar'
 import { format, parse, startOfWeek, getDay } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
-import { type Activity, DEPT_BG_COLORS } from '@/lib/types'
+import { type ProgressItem } from '@/lib/types'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -18,44 +18,71 @@ const localizer = dateFnsLocalizer({
   locales: { id: idLocale },
 })
 
+// Warna mengikuti kartu ringkasan Monitor Progress
+const STATUS_COLORS: Record<string, string> = {
+  berjalan: '#2563eb',
+  melewati_target: '#dc2626',
+  tepat_waktu: '#059669',
+  terlambat: '#d97706',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  berjalan: 'Berjalan',
+  melewati_target: 'Melewati Target',
+  tepat_waktu: 'Selesai Tepat Waktu',
+  terlambat: 'Selesai Terlambat',
+}
+
+// Logika status sama dengan halaman Monitor Progress
+function getStatus(item: ProgressItem): keyof typeof STATUS_COLORS {
+  const today = new Date().toLocaleDateString('sv-SE')
+  if (item.status === 'done') {
+    const doneDate = item.completed_at
+      ? new Date(item.completed_at).toLocaleDateString('sv-SE')
+      : today
+    return doneDate <= item.target_date ? 'tepat_waktu' : 'terlambat'
+  }
+  return item.target_date < today ? 'melewati_target' : 'berjalan'
+}
+
 interface CalEvent {
   id: string
   title: string
   start: Date
   end: Date
-  resource: Activity
+  resource: ProgressItem
 }
 
-export function CalendarView({ activities }: { activities: Activity[] }) {
+export function CalendarView({ items }: { items: ProgressItem[] }) {
   const [date, setDate] = useState(new Date())
   const [view, setView] = useState<View>('month')
   const router = useRouter()
 
-  const events: CalEvent[] = activities.map((a) => ({
-    id: a.id,
-    title: a.title,
-    start: new Date(a.start_date),
-    end: new Date(a.end_date),
-    resource: a,
-  }))
-
-  const eventStyleGetter = useCallback((event: CalEvent) => {
-    const deptName = event.resource.departments?.name ?? ''
-    const bg = DEPT_BG_COLORS[deptName] ?? '#64748b'
+  const events: CalEvent[] = items.map((item) => {
+    const [y, m, d] = item.target_date.split('-').map(Number)
+    const day = new Date(y, m - 1, d)
     return {
-      style: {
-        backgroundColor: bg,
-        borderRadius: '4px',
-        color: 'white',
-        border: 'none',
-        fontSize: '12px',
-        padding: '1px 4px',
-      },
+      id: item.id,
+      title: item.pic?.full_name ? `${item.title} — ${item.pic.full_name}` : item.title,
+      start: day,
+      end: day,
+      resource: item,
     }
-  }, [])
+  })
 
-  const handleSelectEvent = useCallback((event: CalEvent) => {
-    router.push(`/activities/${event.id}`)
+  const eventStyleGetter = useCallback((event: CalEvent) => ({
+    style: {
+      backgroundColor: STATUS_COLORS[getStatus(event.resource)],
+      borderRadius: '4px',
+      color: 'white',
+      border: 'none',
+      fontSize: '12px',
+      padding: '1px 4px',
+    },
+  }), [])
+
+  const handleSelectEvent = useCallback(() => {
+    router.push('/progress')
   }, [router])
 
   return (
@@ -109,7 +136,7 @@ export function CalendarView({ activities }: { activities: Activity[] }) {
           toolbar={false}
           culture="id"
           messages={{
-            noEventsInRange: 'Tidak ada kegiatan pada rentang ini',
+            noEventsInRange: 'Tidak ada target pekerjaan pada rentang ini',
             showMore: (total) => `+${total} lagi`,
           }}
         />
@@ -117,10 +144,10 @@ export function CalendarView({ activities }: { activities: Activity[] }) {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mt-3 px-2 pt-2 border-t">
-        {Object.entries(DEPT_BG_COLORS).map(([name, color]) => (
-          <div key={name} className="flex items-center gap-1.5 text-xs">
-            <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: color }} />
-            {name}
+        {Object.entries(STATUS_LABELS).map(([key, label]) => (
+          <div key={key} className="flex items-center gap-1.5 text-xs">
+            <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: STATUS_COLORS[key] }} />
+            {label}
           </div>
         ))}
       </div>
