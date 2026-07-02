@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { type Expense, type ExpenseCategory, EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_COLORS } from '@/lib/types'
 import { AdminCategoryCard } from './AdminCategoryCard'
 import { BudgetCard } from '../expenses/BudgetCard'
+import { CapexCard } from '../expenses/CapexCard'
 import { Plane, Users, Hotel, MoreHorizontal, Receipt, ArrowRight } from 'lucide-react'
 
 const CATEGORY_META: {
@@ -139,6 +140,9 @@ export default async function AdministrasiPage() {
 
       {/* Staf/dept head: strip pagu (bisa isi/edit), tanpa hitungan sisa */}
       {!isKadiv && <BudgetCard pagu={pagu} totalSpent={0} showRemaining={false} />}
+
+      {/* Anggaran CAPEX — Perpanjangan & Pembaharuan HGB (kadiv) */}
+      {isKadiv && <CapexCard />}
 
       {/* Banner total lama — untuk non-kadiv, atau kadiv yang belum set pagu */}
       {(!isKadiv || pagu === null) && (

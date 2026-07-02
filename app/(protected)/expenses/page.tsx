@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ExpenseForm } from '@/components/ExpenseForm'
 import { ExpenseTable } from '@/components/ExpenseTable'
 import { BudgetCard } from './BudgetCard'
+import { CapexCard } from './CapexCard'
 import { type Expense, type Profile } from '@/lib/types'
 import { Receipt } from 'lucide-react'
 
@@ -64,8 +65,11 @@ export default async function ExpensesPage() {
         </div>
       </div>
 
-      {/* Pagu & sisa anggaran — kadiv panel penuh, staf strip edit pagu */}
+      {/* Anggaran OPEX — kadiv panel penuh, staf strip edit pagu */}
       <BudgetCard pagu={pagu} totalSpent={totalSpent} showRemaining={isKadiv} />
+
+      {/* Anggaran CAPEX — Perpanjangan & Pembaharuan HGB (kadiv) */}
+      {isKadiv && <CapexCard />}
 
       {/* Input form (only non-kadiv) */}
       {canInput && <ExpenseForm />}

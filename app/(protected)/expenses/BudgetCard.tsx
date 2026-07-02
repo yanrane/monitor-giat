@@ -52,7 +52,7 @@ export function BudgetCard({ pagu, totalSpent, showRemaining = true, children }:
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Atur Pagu Anggaran Divisi Hukum</DialogTitle>
+          <DialogTitle>Atur Pagu Anggaran OPEX Divisi Hukum</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 pt-2">
           <div className="space-y-1.5">
@@ -88,7 +88,7 @@ export function BudgetCard({ pagu, totalSpent, showRemaining = true, children }:
         <div className="flex items-center gap-2.5">
           <Wallet size={16} style={{ color: 'rgba(255,255,255,0.7)' }} />
           <span className="text-sm">
-            Pagu Anggaran Divisi: {pagu !== null ? <strong>{formatRupiah(pagu)}</strong> : 'belum diatur'}
+            Pagu Anggaran OPEX Divisi: {pagu !== null ? <strong>{formatRupiah(pagu)}</strong> : 'belum diatur'}
           </span>
         </div>
         {editDialog}
@@ -104,7 +104,7 @@ export function BudgetCard({ pagu, totalSpent, showRemaining = true, children }:
       >
         <div className="flex items-center gap-2.5">
           <Wallet size={16} style={{ color: 'rgba(255,255,255,0.7)' }} />
-          <span className="text-sm">Pagu anggaran belum diatur — klik pensil untuk mengisi</span>
+          <span className="text-sm">Pagu anggaran OPEX belum diatur — klik pensil untuk mengisi</span>
         </div>
         {editDialog}
       </div>
@@ -119,7 +119,7 @@ export function BudgetCard({ pagu, totalSpent, showRemaining = true, children }:
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-6 flex-wrap">
           <div>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Pagu Anggaran</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Pagu Anggaran OPEX</p>
             <p className="text-base font-bold">{formatRupiah(pagu)}</p>
           </div>
           <div>
@@ -127,7 +127,7 @@ export function BudgetCard({ pagu, totalSpent, showRemaining = true, children }:
             <p className="text-base font-bold">− {formatRupiah(totalSpent)}</p>
           </div>
           <div>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Sisa Anggaran</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Sisa Anggaran OPEX</p>
             <p className="text-lg font-bold" style={{ color: overBudget ? '#fca5a5' : '#6ee7b7' }}>
               {overBudget ? `− ${formatRupiah(Math.abs(sisa!))}` : formatRupiah(sisa!)}
             </p>
