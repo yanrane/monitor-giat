@@ -11,7 +11,7 @@ function formatRupiah(amount: number) {
   return 'Rp ' + amount.toLocaleString('id-ID')
 }
 
-export function BudgetCard({ pagu, totalSpent }: { pagu: number | null; totalSpent: number }) {
+export function BudgetCard({ pagu, totalSpent, children }: { pagu: number | null; totalSpent: number; children?: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState(pagu ? String(pagu) : '')
   const [loading, setLoading] = useState(false)
@@ -97,12 +97,12 @@ export function BudgetCard({ pagu, totalSpent }: { pagu: number | null; totalSpe
             <p className="text-base font-bold">{formatRupiah(pagu)}</p>
           </div>
           <div>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Terpakai ({pctUsed}%)</p>
-            <p className="text-base font-bold">{formatRupiah(totalSpent)}</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Total Pengeluaran ({pctUsed}%)</p>
+            <p className="text-base font-bold">− {formatRupiah(totalSpent)}</p>
           </div>
           <div>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Sisa Anggaran</p>
-            <p className="text-base font-bold" style={{ color: overBudget ? '#fca5a5' : '#6ee7b7' }}>
+            <p className="text-lg font-bold" style={{ color: overBudget ? '#fca5a5' : '#6ee7b7' }}>
               {overBudget ? `− ${formatRupiah(Math.abs(sisa!))}` : formatRupiah(sisa!)}
             </p>
           </div>
@@ -119,6 +119,11 @@ export function BudgetCard({ pagu, totalSpent }: { pagu: number | null; totalSpe
         <p className="text-xs" style={{ color: '#fca5a5' }}>
           ⚠️ Pengeluaran sudah melewati pagu anggaran
         </p>
+      )}
+      {children && (
+        <div className="pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+          {children}
+        </div>
       )}
     </div>
   )

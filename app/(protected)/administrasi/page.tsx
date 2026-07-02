@@ -118,23 +118,13 @@ export default async function AdministrasiPage() {
         </Link>
       </div>
 
-      {/* Pagu & sisa anggaran (kadiv) */}
-      {isKadiv && <BudgetCard pagu={pagu} totalSpent={grandTotal} />}
-
-      {/* Grand total summary */}
-      <div
-        className="rounded-2xl p-4"
-        style={{ background: 'var(--navy-900)', color: 'white' }}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium opacity-60 uppercase tracking-wider">Total Pengeluaran</p>
-            <p className="text-2xl font-bold mt-0.5">{formatRupiah(grandTotal)}</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
+      {/* Panel anggaran terpadu (kadiv, pagu terisi): Pagu − Total Pengeluaran = Sisa + rincian kategori */}
+      {isKadiv && pagu !== null && (
+        <BudgetCard pagu={pagu} totalSpent={grandTotal}>
+          <div className="flex flex-wrap gap-4">
             {CATEGORY_META.map(({ category, icon, color }) => (
-              <div key={category} className="text-right">
-                <div className="flex items-center gap-1.5 justify-end">
+              <div key={category}>
+                <div className="flex items-center gap-1.5">
                   <span style={{ color, opacity: 0.9 }}>{icon}</span>
                   <span className="text-xs font-medium opacity-70">
                     {EXPENSE_CATEGORY_LABELS[category]}
@@ -144,8 +134,39 @@ export default async function AdministrasiPage() {
               </div>
             ))}
           </div>
+        </BudgetCard>
+      )}
+
+      {/* Kadiv tapi pagu belum diatur: strip pengisian pagu */}
+      {isKadiv && pagu === null && <BudgetCard pagu={null} totalSpent={grandTotal} />}
+
+      {/* Banner total lama — untuk non-kadiv, atau kadiv yang belum set pagu */}
+      {(!isKadiv || pagu === null) && (
+        <div
+          className="rounded-2xl p-4"
+          style={{ background: 'var(--navy-900)', color: 'white' }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium opacity-60 uppercase tracking-wider">Total Pengeluaran</p>
+              <p className="text-2xl font-bold mt-0.5">{formatRupiah(grandTotal)}</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {CATEGORY_META.map(({ category, icon, color }) => (
+                <div key={category} className="text-right">
+                  <div className="flex items-center gap-1.5 justify-end">
+                    <span style={{ color, opacity: 0.9 }}>{icon}</span>
+                    <span className="text-xs font-medium opacity-70">
+                      {EXPENSE_CATEGORY_LABELS[category]}
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold mt-0.5">{formatRupiah(totals[category])}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 4 category cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
