@@ -1,7 +1,7 @@
 export type Role = 'kadiv' | 'dept_head' | 'staff'
 export type ActivityStatus = 'belum_mulai' | 'berjalan' | 'selesai' | 'ditunda'
 export type TaskStatus = 'pending' | 'done'
-export type ExpenseCategory = 'tiket' | 'honor' | 'hotel' | 'lainnya'
+export type ExpenseCategory = 'tiket' | 'honor' | 'hotel' | 'sewa_kendaraan' | 'lainnya'
 export type NotificationType = 'status_change' | 'new_comment' | 'deadline_reminder' | 'briefing'
 
 export interface Department {
@@ -160,6 +160,7 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   tiket: 'Tiket Transportasi',
   honor: 'Pembayaran Honor',
   hotel: 'Akomodasi Hotel',
+  sewa_kendaraan: 'Sewa Kendaraan',
   lainnya: 'Pengeluaran Lainnya',
 }
 
@@ -167,6 +168,7 @@ export const EXPENSE_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
   tiket: '#0891b2',
   honor: '#7c3aed',
   hotel: '#059669',
+  sewa_kendaraan: '#e11d48',
   lainnya: '#d97706',
 }
 

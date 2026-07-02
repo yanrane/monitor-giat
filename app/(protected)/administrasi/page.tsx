@@ -9,7 +9,7 @@ import { SectionDivider } from '@/components/SectionDivider'
 import { CapexForm } from './CapexForm'
 import { Collapsible } from '@/components/Collapsible'
 import { formatDate } from '@/lib/utils'
-import { Plane, Users, Hotel, MoreHorizontal, Receipt, ArrowRight } from 'lucide-react'
+import { Plane, Users, Hotel, Car, MoreHorizontal, Receipt, ArrowRight } from 'lucide-react'
 
 const CATEGORY_META: {
   category: ExpenseCategory
@@ -38,6 +38,13 @@ const CATEGORY_META: {
     color:       '#059669',
     bg:          '#f0fdf4',
     borderColor: '#a7f3d0',
+  },
+  {
+    category:    'sewa_kendaraan',
+    icon:        <Car size={18} />,
+    color:       '#e11d48',
+    bg:          '#fff1f2',
+    borderColor: '#fecdd3',
   },
   {
     category:    'lainnya',
@@ -85,7 +92,7 @@ export default async function AdministrasiPage() {
     opexList.filter((e) => e.category === cat)
 
   // Grand total per category (OPEX)
-  const totals: Record<ExpenseCategory, number> = { tiket: 0, honor: 0, hotel: 0, lainnya: 0 }
+  const totals: Record<ExpenseCategory, number> = { tiket: 0, honor: 0, hotel: 0, sewa_kendaraan: 0, lainnya: 0 }
   for (const e of opexList) totals[e.category as ExpenseCategory] += e.amount
   const grandTotal = Object.values(totals).reduce((a, b) => a + b, 0)
 

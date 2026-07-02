@@ -214,6 +214,7 @@ export function AdminCategoryCard({
                       category === 'tiket' ? 'Contoh: Tiket pesawat Jakarta-Pangkalpinang PP' :
                       category === 'honor' ? 'Contoh: Honor narasumber seminar hukum, 3 Maret 2025' :
                       category === 'hotel' ? 'Contoh: Akomodasi hotel 2 malam, sidang Jakarta' :
+                      category === 'sewa_kendaraan' ? 'Contoh: Sewa mobil dinas Jakarta 2 hari' :
                       'Contoh: Konsumsi rapat koordinasi, biaya fotokopi berkas'
                     }
                     className="w-full text-sm px-3 py-2 rounded-xl outline-none"

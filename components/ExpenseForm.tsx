@@ -5,7 +5,7 @@ import { Plus, Loader2, ChevronDown } from 'lucide-react'
 import { addExpense } from '@/app/(protected)/expenses/actions'
 import { type ExpenseCategory, EXPENSE_CATEGORY_LABELS } from '@/lib/types'
 
-const CATEGORIES: ExpenseCategory[] = ['tiket', 'honor', 'hotel', 'lainnya']
+const CATEGORIES: ExpenseCategory[] = ['tiket', 'honor', 'hotel', 'sewa_kendaraan', 'lainnya']
 
 export function ExpenseForm() {
   const [open, setOpen]     = useState(false)

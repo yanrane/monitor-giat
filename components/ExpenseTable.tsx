@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Trash2, Loader2, Plane, Users, Hotel, MoreHorizontal, Landmark } from 'lucide-react'
+import { Trash2, Loader2, Plane, Users, Hotel, Car, MoreHorizontal, Landmark } from 'lucide-react'
 import { type Expense, type ExpenseCategory, EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_COLORS } from '@/lib/types'
 import { deleteExpense } from '@/app/(protected)/expenses/actions'
 
@@ -19,6 +19,7 @@ const CATEGORY_ICONS: Record<ExpenseCategory, React.ElementType> = {
   tiket: Plane,
   honor: Users,
   hotel: Hotel,
+  sewa_kendaraan: Car,
   lainnya: MoreHorizontal,
 }
 
@@ -41,7 +42,7 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId, hideSummary = f
   }
 
   // Summary per category
-  const summary: Record<ExpenseCategory, number> = { tiket: 0, honor: 0, hotel: 0, lainnya: 0 }
+  const summary: Record<ExpenseCategory, number> = { tiket: 0, honor: 0, hotel: 0, sewa_kendaraan: 0, lainnya: 0 }
   for (const e of expenses) {
     summary[e.category as ExpenseCategory] += e.amount
   }
