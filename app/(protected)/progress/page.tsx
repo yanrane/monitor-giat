@@ -174,7 +174,7 @@ export default async function ProgressPage() {
                   <div className="flex items-center gap-2.5 sm:contents">
                     <ProgressToggle itemId={item.id} status={item.status} canToggle={canToggle} />
                     <p
-                      className="text-sm min-w-0 flex-1 sm:truncate"
+                      className="text-sm min-w-0 flex-1 break-words"
                       style={{
                         color: isDone ? '#9ca3af' : st.label === 'Melewati Target' ? '#991b1b' : 'var(--text-primary)',
                         textDecoration: isDone ? 'line-through' : 'none',
