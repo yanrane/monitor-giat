@@ -4,6 +4,7 @@ import { type Profile, type ProgressItem } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { ProgressForm } from './ProgressForm'
 import { ProgressToggle, ProgressDelete } from './ProgressRowActions'
+import { EditTargetButton } from './EditTargetButton'
 import { TrendingUp, AlertTriangle, CheckCircle2, Clock, MessageCircle } from 'lucide-react'
 
 interface ItemWithPic extends ProgressItem {
@@ -81,7 +82,7 @@ export default async function ProgressPage() {
     people = (data ?? []) as unknown as Profile[]
   }
 
-  const gridCols = isKadiv ? '24px 1fr 180px 110px 110px 130px 64px' : '24px 1fr 180px 110px 110px 130px'
+  const gridCols = isKadiv ? '24px 1fr 180px 110px 110px 130px 92px' : '24px 1fr 180px 110px 110px 130px'
 
   // Pesan siap-kirim WhatsApp untuk PIC. Kalau nomor WA PIC terisi
   // (Kelola Akun), langsung tertuju ke orangnya; kalau kosong, Boss pilih kontak.
@@ -198,6 +199,7 @@ export default async function ProgressPage() {
                     </div>
                     {isKadiv && (
                       <div className="flex items-center gap-1 shrink-0">
+                        <EditTargetButton itemId={item.id} title={item.title} targetDate={item.target_date} />
                         <a
                           href={waLink(item)}
                           target="_blank"

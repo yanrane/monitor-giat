@@ -67,6 +67,28 @@ export async function toggleProgressItem(id: string, currentStatus: string) {
   revalidatePath('/progress')
 }
 
+export async function updateProgressTarget(id: string, targetDate: string) {
+  if (!targetDate) return
+  const supabase = await createClient()
+  const { data: updated } = await supabase.from('progress_items')
+    .update({ target_date: targetDate })
+    .eq('id', id)
+    .select('title, pic_id')
+    .single()
+
+  // Kabari PIC bahwa target pekerjaannya direvisi
+  if (updated && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    await createAdminClient().from('notifications').insert({
+      user_id: updated.pic_id,
+      title: 'Target pekerjaan direvisi',
+      message: `Target selesai "${updated.title}" diubah menjadi ${formatDate(targetDate)}.`,
+      type: 'status_change',
+    })
+  }
+
+  revalidatePath('/progress')
+}
+
 export async function deleteProgressItem(id: string) {
   const supabase = await createClient()
   await supabase.from('progress_items').delete().eq('id', id)
