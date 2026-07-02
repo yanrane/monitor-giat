@@ -18,6 +18,7 @@ export interface Profile {
   dept_id: string | null
   phone: string | null
   is_active: boolean
+  is_budget_viewer: boolean
   created_at: string
   departments?: Department
 }

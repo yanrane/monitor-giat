@@ -30,6 +30,9 @@ export default async function ExpensesPage() {
   const expenseList = (expenses as Expense[]) ?? []
   const isKadiv     = currentUser.role === 'kadiv'
   const canInput    = currentUser.role !== 'kadiv'
+  // Budget viewer (mis. staf administrasi tertentu) melihat panel anggaran
+  // penuh seperti kadiv; RLS 010 juga membuka select semua expenses untuknya
+  const canViewBudget = isKadiv || currentUser.is_budget_viewer === true
 
   // Pagu anggaran OPEX — staf boleh mengisi, tapi panel sisa hanya kadiv
   // (total pengeluaran yang terlihat non-kadiv cuma slice dept-nya)
@@ -76,7 +79,7 @@ export default async function ExpensesPage() {
 
       {/* ══ SEKSI ANGGARAN OPEX ══ */}
       <SectionDivider label="Anggaran OPEX — Operasional" />
-      <BudgetCard pagu={pagu} totalSpent={opexTotal} showRemaining={isKadiv} />
+      <BudgetCard pagu={pagu} totalSpent={opexTotal} showRemaining={canViewBudget} />
       <ExpenseTable
         expenses={opexList}
         isKadiv={isKadiv}
@@ -86,7 +89,7 @@ export default async function ExpensesPage() {
 
       {/* ══ SEKSI ANGGARAN CAPEX ══ */}
       <SectionDivider label="Anggaran CAPEX — Perpanjangan & Pembaharuan HGB" />
-      {isKadiv && <CapexCard totalSpent={capexTotal} />}
+      {canViewBudget && <CapexCard totalSpent={capexTotal} />}
       <ExpenseTable
         expenses={capexList}
         isKadiv={isKadiv}

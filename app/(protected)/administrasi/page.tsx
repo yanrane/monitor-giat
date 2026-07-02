@@ -58,11 +58,13 @@ export default async function AdministrasiPage() {
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase
-    .from('profiles').select('role, dept_id, full_name').eq('id', user.id).single()
+    .from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/login')
 
   const isKadiv   = profile.role === 'kadiv'
   const canInput  = !isKadiv
+  // Budget viewer (mis. staf administrasi tertentu) = panel anggaran penuh
+  const canViewBudget = isKadiv || profile.is_budget_viewer === true
 
   const { data: expenses } = await supabase
     .from('expenses')
@@ -126,8 +128,8 @@ export default async function AdministrasiPage() {
       {/* ══ SEKSI ANGGARAN OPEX ══ */}
       <SectionDivider label="Anggaran OPEX — Operasional" />
 
-      {/* Panel anggaran terpadu (kadiv, pagu terisi): Pagu − Total Pengeluaran = Sisa + rincian kategori */}
-      {isKadiv && pagu !== null && (
+      {/* Panel anggaran terpadu (pagu terisi): Pagu − Total Pengeluaran = Sisa + rincian kategori */}
+      {canViewBudget && pagu !== null && (
         <BudgetCard pagu={pagu} totalSpent={grandTotal}>
           <div className="flex flex-wrap gap-4">
             {CATEGORY_META.map(({ category, icon, color }) => (
@@ -145,14 +147,14 @@ export default async function AdministrasiPage() {
         </BudgetCard>
       )}
 
-      {/* Kadiv tapi pagu belum diatur: strip pengisian pagu */}
-      {isKadiv && pagu === null && <BudgetCard pagu={null} totalSpent={grandTotal} />}
+      {/* Pagu belum diatur: strip pengisian pagu */}
+      {canViewBudget && pagu === null && <BudgetCard pagu={null} totalSpent={grandTotal} />}
 
-      {/* Staf/dept head: strip pagu (bisa isi/edit), tanpa hitungan sisa */}
-      {!isKadiv && <BudgetCard pagu={pagu} totalSpent={0} showRemaining={false} />}
+      {/* Staf/dept head biasa: strip pagu (bisa isi/edit), tanpa hitungan sisa */}
+      {!canViewBudget && <BudgetCard pagu={pagu} totalSpent={0} showRemaining={false} />}
 
-      {/* Banner total lama — untuk non-kadiv, atau kadiv yang belum set pagu */}
-      {(!isKadiv || pagu === null) && (
+      {/* Banner total lama — untuk yang tanpa akses panel, atau pagu belum diisi */}
+      {(!canViewBudget || pagu === null) && (
         <div
           className="rounded-2xl p-4"
           style={{ background: 'var(--navy-900)', color: 'white' }}
@@ -201,7 +203,7 @@ export default async function AdministrasiPage() {
       {/* ══ SEKSI ANGGARAN CAPEX ══ */}
       <SectionDivider label="Anggaran CAPEX — Perpanjangan & Pembaharuan HGB" />
 
-      {isKadiv && <CapexCard totalSpent={capexTotal} />}
+      {canViewBudget && <CapexCard totalSpent={capexTotal} />}
 
       {/* Daftar pengeluaran CAPEX */}
       {capexList.length === 0 ? (
