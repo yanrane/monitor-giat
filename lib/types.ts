@@ -82,6 +82,19 @@ export interface Task {
   profiles?: Profile
 }
 
+export interface ProgressItem {
+  id: string
+  title: string
+  pic_id: string
+  target_date: string
+  status: TaskStatus
+  completed_at: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+  pic?: Profile
+}
+
 export interface Expense {
   id: string
   category: ExpenseCategory

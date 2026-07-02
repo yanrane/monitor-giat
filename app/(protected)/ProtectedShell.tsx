@@ -40,7 +40,7 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
     ...(!isKadiv ? [{ href: `/departments/${profile.dept_id}`, icon: Building2, label: 'Kegiatan' }] : []),
     ...(!isKadiv ? [{ href: '/daily-log', icon: ClipboardList, label: 'Log Harian' }] : []),
     ...(isKadiv || isDeptHead ? [{ href: '/monitor', icon: Users, label: 'Monitor Tim' }] : []),
-    { href: '/tasks', icon: CheckSquare, label: 'Pekerjaan' },
+    { href: '/progress', icon: CheckSquare, label: 'Monitor Progress' },
     { href: '/administrasi', icon: FolderOpen, label: 'Administrasi' },
     { href: '/calendar', icon: Calendar, label: 'Kalender' },
     { href: '/expenses', icon: Receipt, label: 'Pengeluaran' },
