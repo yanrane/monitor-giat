@@ -114,10 +114,10 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
       <div className="divide-y divide-[--cream-border]">
         {groups.map((group) => {
           const st = groupStatus(group, today)
-          const doneCount = group.members.filter((m) => m.status === 'done').length
-          const allDone = doneCount === group.members.length
-          const single = group.members.length === 1
+          const allDone = group.members.every((m) => m.status === 'done')
           const ids = group.members.map((m) => m.id)
+          // Pekerjaan tim: satu centang untuk semua PIC; anggota tim mana pun bisa menandai
+          const canToggle = isKadiv || group.members.some((m) => m.pic_id === userId)
           const latestDone = allDone
             ? group.members.reduce((max, m) => (m.completed_at && m.completed_at > max ? m.completed_at : max), '')
             : ''
@@ -129,17 +129,11 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
               style={{ gridTemplateColumns: gridCols, background: allDone ? '#f9fafb' : 'white' }}
             >
               <div className="flex items-center gap-2.5 sm:contents">
-                {single ? (
-                  <ProgressToggle
-                    itemId={group.members[0].id}
-                    status={group.members[0].status}
-                    canToggle={isKadiv || group.members[0].pic_id === userId}
-                  />
-                ) : allDone ? (
-                  <CheckCircle2 size={18} className="shrink-0" style={{ color: '#10b981' }} />
-                ) : (
-                  <span className="w-[18px] shrink-0" />
-                )}
+                <ProgressToggle
+                  itemIds={ids}
+                  status={allDone ? 'done' : 'pending'}
+                  canToggle={canToggle}
+                />
                 <p
                   className="text-sm min-w-0 flex-1 break-words"
                   style={{
@@ -150,22 +144,11 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
                   {group.title}
                 </p>
 
-                {/* PIC — semua nama digabung satu kolom, centang per orang */}
+                {/* PIC — semua nama digabung satu kolom (kerja tim, selesai bersama) */}
                 <div className="hidden sm:flex flex-col gap-1 min-w-0">
                   {group.members.map((m) => (
                     <div key={m.id} className="flex items-center gap-1.5 min-w-0">
-                      {!single && (
-                        <span className="scale-75 origin-left shrink-0">
-                          <ProgressToggle itemId={m.id} status={m.status} canToggle={isKadiv || m.pic_id === userId} />
-                        </span>
-                      )}
-                      <span
-                        className="text-xs truncate"
-                        style={{
-                          color: 'var(--text-muted)',
-                          textDecoration: !single && m.status === 'done' ? 'line-through' : 'none',
-                        }}
-                      >
+                      <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
                         {m.pic?.full_name ?? '—'}
                       </span>
                       {isKadiv && (
@@ -188,11 +171,7 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
                   {formatDate(group.target_date)}
                 </p>
                 <p className="hidden sm:block text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {allDone && latestDone
-                    ? formatDate(latestDone)
-                    : doneCount > 0
-                      ? `${doneCount}/${group.members.length} ✓`
-                      : '—'}
+                  {allDone && latestDone ? formatDate(latestDone) : '—'}
                 </p>
                 <div className="hidden sm:block">
                   <span
@@ -226,11 +205,6 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
                 </div>
                 {group.members.map((m) => (
                   <div key={m.id} className="flex items-center gap-1.5">
-                    {!single && (
-                      <span className="scale-75 origin-left shrink-0">
-                        <ProgressToggle itemId={m.id} status={m.status} canToggle={isKadiv || m.pic_id === userId} />
-                      </span>
-                    )}
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       {m.pic?.full_name ?? '—'}
                     </span>

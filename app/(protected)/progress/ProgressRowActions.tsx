@@ -4,14 +4,13 @@ import { useState } from 'react'
 import { CheckCircle2, Circle, Loader2, Trash2 } from 'lucide-react'
 import { toggleProgressItem, deleteProgressItem } from './actions'
 
-interface ProgressRowActionsProps {
-  itemId: string
+interface ProgressToggleProps {
+  itemIds: string[]
   status: string
   canToggle: boolean
-  canDelete: boolean
 }
 
-export function ProgressToggle({ itemId, status, canToggle }: Omit<ProgressRowActionsProps, 'canDelete'>) {
+export function ProgressToggle({ itemIds, status, canToggle }: ProgressToggleProps) {
   const [loading, setLoading] = useState(false)
 
   if (!canToggle) {
@@ -22,7 +21,7 @@ export function ProgressToggle({ itemId, status, canToggle }: Omit<ProgressRowAc
 
   async function handleToggle() {
     setLoading(true)
-    await toggleProgressItem(itemId, status)
+    await toggleProgressItem(itemIds, status)
     setLoading(false)
   }
 

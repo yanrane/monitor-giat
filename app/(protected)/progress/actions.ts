@@ -44,26 +44,29 @@ export async function addProgressItem(formData: FormData) {
   revalidatePath('/progress')
 }
 
-export async function toggleProgressItem(id: string, currentStatus: string) {
+// Pekerjaan tim: satu centang menyelesaikan semua baris PIC sekaligus
+export async function toggleProgressItem(ids: string[], currentStatus: string) {
+  if (ids.length === 0) return
   const supabase = await createClient()
   const done = currentStatus !== 'done'
   const { data: updated } = await supabase.from('progress_items').update({
     status: done ? 'done' : 'pending',
     completed_at: done ? new Date().toISOString() : null,
-  }).eq('id', id)
-    .select('title, target_date, created_by, pic_id, pic:profiles!progress_items_pic_id_fkey(full_name)')
-    .single()
+  }).in('id', ids)
+    .select('title, target_date, created_by')
 
-  // Lapor balik ke pembuat (Kadiv) saat PIC menandai selesai
-  if (done && updated && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  // Lapor balik ke pembuat (Kadiv) saat pekerjaan ditandai selesai
+  const first = updated?.[0]
+  if (done && first && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     const { data: { user } } = await supabase.auth.getUser()
-    if (user && user.id !== updated.created_by) {
-      const picName = (updated.pic as unknown as { full_name: string } | null)?.full_name ?? 'PIC'
-      const onTime = new Date().toLocaleDateString('sv-SE') <= updated.target_date
+    if (user && user.id !== first.created_by) {
+      const { data: toggler } = await supabase
+        .from('profiles').select('full_name').eq('id', user.id).single()
+      const onTime = new Date().toLocaleDateString('sv-SE') <= first.target_date
       await createAdminClient().from('notifications').insert({
-        user_id: updated.created_by,
+        user_id: first.created_by,
         title: `Pekerjaan selesai (${onTime ? 'tepat waktu' : 'terlambat'})`,
-        message: `"${updated.title}" ditandai selesai oleh ${picName}.`,
+        message: `"${first.title}" ditandai selesai oleh ${toggler?.full_name ?? 'PIC'}.`,
         type: 'status_change',
       })
     }
