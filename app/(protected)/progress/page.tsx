@@ -76,6 +76,7 @@ export default async function ProgressPage() {
       .from('profiles')
       .select('id, full_name, role, dept_id, created_at, departments(id, name)')
       .neq('role', 'kadiv')
+      .eq('is_active', true)
       .order('full_name')
     people = (data ?? []) as unknown as Profile[]
   }
