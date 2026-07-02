@@ -29,13 +29,11 @@ export default async function ExpensesPage() {
   const isKadiv     = currentUser.role === 'kadiv'
   const canInput    = currentUser.role !== 'kadiv'
 
-  // Pagu anggaran (kadiv only — total pengeluaran non-kadiv cuma slice dept-nya)
-  let pagu: number | null = null
-  if (isKadiv) {
-    const { data: setting } = await supabase
-      .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
-    pagu = setting?.value ? Number(setting.value) : null
-  }
+  // Pagu anggaran — staf boleh mengisi, tapi panel sisa hanya kadiv
+  // (total pengeluaran yang terlihat non-kadiv cuma slice dept-nya)
+  const { data: setting } = await supabase
+    .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
+  const pagu = setting?.value ? Number(setting.value) : null
   const totalSpent = expenseList.reduce((sum, e) => sum + e.amount, 0)
 
   // Month filter: group by month for summary
@@ -66,8 +64,8 @@ export default async function ExpensesPage() {
         </div>
       </div>
 
-      {/* Pagu & sisa anggaran (kadiv) */}
-      {isKadiv && <BudgetCard pagu={pagu} totalSpent={totalSpent} />}
+      {/* Pagu & sisa anggaran — kadiv panel penuh, staf strip edit pagu */}
+      <BudgetCard pagu={pagu} totalSpent={totalSpent} showRemaining={isKadiv} />
 
       {/* Input form (only non-kadiv) */}
       {canInput && <ExpenseForm />}

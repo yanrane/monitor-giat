@@ -11,7 +11,16 @@ function formatRupiah(amount: number) {
   return 'Rp ' + amount.toLocaleString('id-ID')
 }
 
-export function BudgetCard({ pagu, totalSpent, children }: { pagu: number | null; totalSpent: number; children?: React.ReactNode }) {
+interface BudgetCardProps {
+  pagu: number | null
+  totalSpent: number
+  // false = strip ringkas (pagu + tombol edit saja, tanpa sisa) — untuk staf,
+  // karena data pengeluaran yang mereka lihat cuma slice dept-nya sendiri.
+  showRemaining?: boolean
+  children?: React.ReactNode
+}
+
+export function BudgetCard({ pagu, totalSpent, showRemaining = true, children }: BudgetCardProps) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState(pagu ? String(pagu) : '')
   const [loading, setLoading] = useState(false)
@@ -69,6 +78,23 @@ export function BudgetCard({ pagu, totalSpent, children }: { pagu: number | null
       </DialogContent>
     </Dialog>
   )
+
+  if (!showRemaining) {
+    return (
+      <div
+        className="rounded-2xl px-4 py-3 flex items-center justify-between"
+        style={{ background: 'var(--navy-900)', color: 'white' }}
+      >
+        <div className="flex items-center gap-2.5">
+          <Wallet size={16} style={{ color: 'rgba(255,255,255,0.7)' }} />
+          <span className="text-sm">
+            Pagu Anggaran Divisi: {pagu !== null ? <strong>{formatRupiah(pagu)}</strong> : 'belum diatur'}
+          </span>
+        </div>
+        {editDialog}
+      </div>
+    )
+  }
 
   if (pagu === null) {
     return (

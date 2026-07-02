@@ -77,13 +77,10 @@ export default async function AdministrasiPage() {
   for (const e of expenseList) totals[e.category as ExpenseCategory] += e.amount
   const grandTotal = Object.values(totals).reduce((a, b) => a + b, 0)
 
-  // Pagu anggaran (kadiv only, sumber sama dgn halaman Pengeluaran)
-  let pagu: number | null = null
-  if (isKadiv) {
-    const { data: setting } = await supabase
-      .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
-    pagu = setting?.value ? Number(setting.value) : null
-  }
+  // Pagu anggaran (sumber sama dgn halaman Pengeluaran; staf boleh isi, sisa hanya kadiv)
+  const { data: setting } = await supabase
+    .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
+  const pagu = setting?.value ? Number(setting.value) : null
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -139,6 +136,9 @@ export default async function AdministrasiPage() {
 
       {/* Kadiv tapi pagu belum diatur: strip pengisian pagu */}
       {isKadiv && pagu === null && <BudgetCard pagu={null} totalSpent={grandTotal} />}
+
+      {/* Staf/dept head: strip pagu (bisa isi/edit), tanpa hitungan sisa */}
+      {!isKadiv && <BudgetCard pagu={pagu} totalSpent={0} showRemaining={false} />}
 
       {/* Banner total lama — untuk non-kadiv, atau kadiv yang belum set pagu */}
       {(!isKadiv || pagu === null) && (
