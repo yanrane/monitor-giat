@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { type Expense, type ExpenseCategory, EXPENSE_CATEGORY_LABELS, EXPENSE_CATEGORY_COLORS } from '@/lib/types'
 import { AdminCategoryCard } from './AdminCategoryCard'
+import { BudgetCard } from '../expenses/BudgetCard'
 import { Plane, Users, Hotel, MoreHorizontal, Receipt, ArrowRight } from 'lucide-react'
 
 const CATEGORY_META: {
@@ -76,6 +77,14 @@ export default async function AdministrasiPage() {
   for (const e of expenseList) totals[e.category as ExpenseCategory] += e.amount
   const grandTotal = Object.values(totals).reduce((a, b) => a + b, 0)
 
+  // Pagu anggaran (kadiv only, sumber sama dgn halaman Pengeluaran)
+  let pagu: number | null = null
+  if (isKadiv) {
+    const { data: setting } = await supabase
+      .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
+    pagu = setting?.value ? Number(setting.value) : null
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -108,6 +117,9 @@ export default async function AdministrasiPage() {
           Lihat semua <ArrowRight size={12} />
         </Link>
       </div>
+
+      {/* Pagu & sisa anggaran (kadiv) */}
+      {isKadiv && <BudgetCard pagu={pagu} totalSpent={grandTotal} />}
 
       {/* Grand total summary */}
       <div
