@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ExpenseForm } from '@/components/ExpenseForm'
 import { ExpenseTable } from '@/components/ExpenseTable'
+import { BudgetCard } from './BudgetCard'
 import { type Expense, type Profile } from '@/lib/types'
 import { Receipt } from 'lucide-react'
 
@@ -27,6 +28,15 @@ export default async function ExpensesPage() {
   const expenseList = (expenses as Expense[]) ?? []
   const isKadiv     = currentUser.role === 'kadiv'
   const canInput    = currentUser.role !== 'kadiv'
+
+  // Pagu anggaran (kadiv only — total pengeluaran non-kadiv cuma slice dept-nya)
+  let pagu: number | null = null
+  if (isKadiv) {
+    const { data: setting } = await supabase
+      .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
+    pagu = setting?.value ? Number(setting.value) : null
+  }
+  const totalSpent = expenseList.reduce((sum, e) => sum + e.amount, 0)
 
   // Month filter: group by month for summary
   const months = [...new Set(expenseList.map((e) => e.expense_date.slice(0, 7)))].sort().reverse()
@@ -55,6 +65,9 @@ export default async function ExpensesPage() {
           </p>
         </div>
       </div>
+
+      {/* Pagu & sisa anggaran (kadiv) */}
+      {isKadiv && <BudgetCard pagu={pagu} totalSpent={totalSpent} />}
 
       {/* Input form (only non-kadiv) */}
       {canInput && <ExpenseForm />}
