@@ -5,6 +5,7 @@ import { formatDate } from '@/lib/utils'
 import { ProgressForm } from './ProgressForm'
 import { ProgressToggle, ProgressDelete } from './ProgressRowActions'
 import { EditTargetButton } from './EditTargetButton'
+import { AutoRefresh } from './AutoRefresh'
 import { TrendingUp, AlertTriangle, CheckCircle2, Clock, MessageCircle } from 'lucide-react'
 
 interface ItemWithPic extends ProgressItem {
@@ -101,6 +102,7 @@ export default async function ProgressPage() {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      <AutoRefresh />
       {/* Header */}
       <div>
         <h1 className="font-serif leading-tight" style={{ fontSize: '26px', color: 'var(--navy-900)' }}>
