@@ -57,7 +57,7 @@ export default async function ProgressPage() {
 
   const { data: items } = await supabase
     .from('progress_items')
-    .select('*, pic:profiles!progress_items_pic_id_fkey(id, full_name, role, dept_id, departments(id, name))')
+    .select('*, pic:profiles!progress_items_pic_id_fkey(id, full_name, role, dept_id, phone, departments(id, name))')
     .order('status', { ascending: true })
     .order('target_date', { ascending: true })
 
@@ -83,7 +83,8 @@ export default async function ProgressPage() {
 
   const gridCols = isKadiv ? '24px 1fr 180px 110px 110px 130px 64px' : '24px 1fr 180px 110px 110px 130px'
 
-  // Pesan siap-kirim WhatsApp untuk PIC (wa.me — Boss tinggal pilih kontak)
+  // Pesan siap-kirim WhatsApp untuk PIC. Kalau nomor WA PIC terisi
+  // (Kelola Akun), langsung tertuju ke orangnya; kalau kosong, Boss pilih kontak.
   function waLink(item: ItemWithPic) {
     const msg =
       `Halo ${item.pic?.full_name ?? ''},\n\n` +
@@ -92,7 +93,9 @@ export default async function ProgressPage() {
       `🎯 Target selesai: ${formatDate(item.target_date)}\n\n` +
       `Mohon ditindaklanjuti dan tandai selesai di aplikasi Monitor Kegiatan:\n` +
       `https://monitor-giat.vercel.app/progress`
-    return `https://wa.me/?text=${encodeURIComponent(msg)}`
+    const digits = (item.pic?.phone ?? '').replace(/\D/g, '')
+    const intl = digits.startsWith('0') ? '62' + digits.slice(1) : digits
+    return `https://wa.me/${intl}?text=${encodeURIComponent(msg)}`
   }
 
   return (

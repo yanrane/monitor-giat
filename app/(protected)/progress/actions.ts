@@ -42,10 +42,28 @@ export async function addProgressItem(formData: FormData) {
 export async function toggleProgressItem(id: string, currentStatus: string) {
   const supabase = await createClient()
   const done = currentStatus !== 'done'
-  await supabase.from('progress_items').update({
+  const { data: updated } = await supabase.from('progress_items').update({
     status: done ? 'done' : 'pending',
     completed_at: done ? new Date().toISOString() : null,
   }).eq('id', id)
+    .select('title, target_date, created_by, pic_id, pic:profiles!progress_items_pic_id_fkey(full_name)')
+    .single()
+
+  // Lapor balik ke pembuat (Kadiv) saat PIC menandai selesai
+  if (done && updated && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user && user.id !== updated.created_by) {
+      const picName = (updated.pic as unknown as { full_name: string } | null)?.full_name ?? 'PIC'
+      const onTime = new Date().toLocaleDateString('sv-SE') <= updated.target_date
+      await createAdminClient().from('notifications').insert({
+        user_id: updated.created_by,
+        title: `Pekerjaan selesai (${onTime ? 'tepat waktu' : 'terlambat'})`,
+        message: `"${updated.title}" ditandai selesai oleh ${picName}.`,
+        type: 'status_change',
+      })
+    }
+  }
+
   revalidatePath('/progress')
 }
 

@@ -15,6 +15,7 @@ export function EditProfileRow({ profile, departments }: { profile: Profile; dep
   const [open, setOpen] = useState(false)
   const [role, setRole] = useState(profile.role)
   const [deptId, setDeptId] = useState(profile.dept_id ?? '')
+  const [phone, setPhone] = useState(profile.phone ?? '')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
@@ -25,7 +26,7 @@ export function EditProfileRow({ profile, departments }: { profile: Profile; dep
     setLoading(true)
     const { error } = await supabase
       .from('profiles')
-      .update({ role, dept_id: deptId || null })
+      .update({ role, dept_id: deptId || null, phone: phone.trim() || null })
       .eq('id', profile.id)
     if (error) {
       toast.error('Gagal memperbarui profil')
@@ -69,6 +70,16 @@ export function EditProfileRow({ profile, departments }: { profile: Profile; dep
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Nomor WA</Label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="cth: 081234567890"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
           </div>
           <Button onClick={handleSave} disabled={loading} className="w-full">
             {loading ? 'Menyimpan...' : 'Simpan'}
