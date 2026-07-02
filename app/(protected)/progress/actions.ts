@@ -14,26 +14,31 @@ export async function addProgressItem(formData: FormData) {
   if (!user) return
 
   const title = String(formData.get('title') ?? '').trim()
-  const picId = String(formData.get('pic_id') ?? '')
+  const picIds = formData.getAll('pic_id').map(String).filter(Boolean)
   const targetDate = String(formData.get('target_date') ?? '')
-  if (!title || !picId || !targetDate) return
+  if (!title || picIds.length === 0 || !targetDate) return
 
-  const { error } = await supabase.from('progress_items').insert({
-    title,
-    pic_id: picId,
-    target_date: targetDate,
-    created_by: user.id,
-  })
+  // Multi-PIC = satu baris per orang, biar ketepatan waktu terukur per PIC
+  const { error } = await supabase.from('progress_items').insert(
+    picIds.map((picId) => ({
+      title,
+      pic_id: picId,
+      target_date: targetDate,
+      created_by: user.id,
+    }))
+  )
 
-  // Notifikasi lonceng ke PIC (insert notifications hanya bisa via service_role).
+  // Notifikasi lonceng ke tiap PIC (insert notifications hanya bisa via service_role).
   // Gagal notif tidak boleh menggagalkan penambahan item.
   if (!error && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    await createAdminClient().from('notifications').insert({
-      user_id: picId,
-      title: 'Tugas baru dari Kepala Divisi',
-      message: `Anda ditugaskan: ${title} — target selesai ${formatDate(targetDate)}. Cek menu Monitor Progress.`,
-      type: 'status_change',
-    })
+    await createAdminClient().from('notifications').insert(
+      picIds.map((picId) => ({
+        user_id: picId,
+        title: 'Tugas baru dari Kepala Divisi',
+        message: `Anda ditugaskan: ${title} — target selesai ${formatDate(targetDate)}. Cek menu Monitor Progress.`,
+        type: 'status_change',
+      }))
+    )
   }
 
   revalidatePath('/progress')
