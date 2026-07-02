@@ -150,8 +150,6 @@ export default async function AdministrasiPage() {
       {/* Pagu belum diatur: strip pengisian pagu */}
       {canViewBudget && pagu === null && <BudgetCard pagu={null} totalSpent={grandTotal} />}
 
-      {/* Staf/dept head biasa: strip pagu (bisa isi/edit), tanpa hitungan sisa */}
-      {!canViewBudget && <BudgetCard pagu={pagu} totalSpent={0} showRemaining={false} />}
 
       {/* Banner total lama — untuk yang tanpa akses panel, atau pagu belum diisi */}
       {(!canViewBudget || pagu === null) && (

@@ -79,7 +79,7 @@ export default async function ExpensesPage() {
 
       {/* ══ SEKSI ANGGARAN OPEX ══ */}
       <SectionDivider label="Anggaran OPEX — Operasional" />
-      <BudgetCard pagu={pagu} totalSpent={opexTotal} showRemaining={canViewBudget} />
+      {canViewBudget && <BudgetCard pagu={pagu} totalSpent={opexTotal} />}
       <ExpenseTable
         expenses={opexList}
         isKadiv={isKadiv}
