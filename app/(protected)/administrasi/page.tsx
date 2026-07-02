@@ -6,6 +6,7 @@ import { AdminCategoryCard } from './AdminCategoryCard'
 import { BudgetCard } from '../expenses/BudgetCard'
 import { CapexCard } from '../expenses/CapexCard'
 import { SectionDivider } from '@/components/SectionDivider'
+import { CapexForm } from './CapexForm'
 import { formatDate } from '@/lib/utils'
 import { Plane, Users, Hotel, MoreHorizontal, Receipt, ArrowRight } from 'lucide-react'
 
@@ -202,6 +203,9 @@ export default async function AdministrasiPage() {
       <SectionDivider label="Anggaran CAPEX — Perpanjangan & Pembaharuan HGB" />
 
       {canViewBudget && <CapexCard totalSpent={capexTotal} />}
+
+      {/* Input pengeluaran CAPEX (staf/dept head) */}
+      {canInput && <CapexForm />}
 
       {/* Daftar pengeluaran CAPEX */}
       {capexList.length === 0 ? (

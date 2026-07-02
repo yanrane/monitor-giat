@@ -16,6 +16,7 @@ export async function addAdminExpense(formData: FormData) {
   }
 
   const category       = formData.get('category') as string
+  const budget_type    = formData.get('budget_type') === 'capex' ? 'capex' : 'opex'
   const description    = formData.get('description') as string
   const amountRaw      = formData.get('amount') as string
   const expense_date   = formData.get('expense_date') as string
@@ -30,6 +31,7 @@ export async function addAdminExpense(formData: FormData) {
 
   const { error } = await supabase.from('expenses').insert({
     category,
+    budget_type,
     description:    description.trim(),
     amount,
     expense_date,
