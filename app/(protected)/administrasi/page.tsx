@@ -5,6 +5,8 @@ import { type Expense, type ExpenseCategory, EXPENSE_CATEGORY_LABELS, EXPENSE_CA
 import { AdminCategoryCard } from './AdminCategoryCard'
 import { BudgetCard } from '../expenses/BudgetCard'
 import { CapexCard } from '../expenses/CapexCard'
+import { SectionDivider } from '@/components/SectionDivider'
+import { formatDate } from '@/lib/utils'
 import { Plane, Users, Hotel, MoreHorizontal, Receipt, ArrowRight } from 'lucide-react'
 
 const CATEGORY_META: {
@@ -69,13 +71,18 @@ export default async function AdministrasiPage() {
 
   const expenseList = (expenses as Expense[]) ?? []
 
-  // Group by category
-  const byCategory = (cat: ExpenseCategory) =>
-    expenseList.filter((e) => e.category === cat)
+  // Pisah OPEX vs CAPEX — masing-masing pagu & pengeluaran sendiri
+  const opexList  = expenseList.filter((e) => e.budget_type !== 'capex')
+  const capexList = expenseList.filter((e) => e.budget_type === 'capex')
+  const capexTotal = capexList.reduce((s, e) => s + e.amount, 0)
 
-  // Grand total per category
+  // Group by category (OPEX)
+  const byCategory = (cat: ExpenseCategory) =>
+    opexList.filter((e) => e.category === cat)
+
+  // Grand total per category (OPEX)
   const totals: Record<ExpenseCategory, number> = { tiket: 0, honor: 0, hotel: 0, lainnya: 0 }
-  for (const e of expenseList) totals[e.category as ExpenseCategory] += e.amount
+  for (const e of opexList) totals[e.category as ExpenseCategory] += e.amount
   const grandTotal = Object.values(totals).reduce((a, b) => a + b, 0)
 
   // Pagu anggaran (sumber sama dgn halaman Pengeluaran; staf boleh isi, sisa hanya kadiv)
@@ -116,6 +123,9 @@ export default async function AdministrasiPage() {
         </Link>
       </div>
 
+      {/* ══ SEKSI ANGGARAN OPEX ══ */}
+      <SectionDivider label="Anggaran OPEX — Operasional" />
+
       {/* Panel anggaran terpadu (kadiv, pagu terisi): Pagu − Total Pengeluaran = Sisa + rincian kategori */}
       {isKadiv && pagu !== null && (
         <BudgetCard pagu={pagu} totalSpent={grandTotal}>
@@ -140,9 +150,6 @@ export default async function AdministrasiPage() {
 
       {/* Staf/dept head: strip pagu (bisa isi/edit), tanpa hitungan sisa */}
       {!isKadiv && <BudgetCard pagu={pagu} totalSpent={0} showRemaining={false} />}
-
-      {/* Anggaran CAPEX — Perpanjangan & Pembaharuan HGB (kadiv) */}
-      {isKadiv && <CapexCard />}
 
       {/* Banner total lama — untuk non-kadiv, atau kadiv yang belum set pagu */}
       {(!isKadiv || pagu === null) && (
@@ -191,9 +198,47 @@ export default async function AdministrasiPage() {
         ))}
       </div>
 
+      {/* ══ SEKSI ANGGARAN CAPEX ══ */}
+      <SectionDivider label="Anggaran CAPEX — Perpanjangan & Pembaharuan HGB" />
+
+      {isKadiv && <CapexCard totalSpent={capexTotal} />}
+
+      {/* Daftar pengeluaran CAPEX */}
+      {capexList.length === 0 ? (
+        <div
+          className="rounded-2xl px-4 py-8 text-center"
+          style={{ border: '1px solid var(--cream-border)', background: 'white' }}
+        >
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Belum ada pengeluaran CAPEX. Input lewat halaman Laporan Pengeluaran → pilih Jenis Anggaran "CAPEX".
+          </p>
+        </div>
+      ) : (
+        <div
+          className="rounded-2xl overflow-hidden bg-white divide-y divide-[--cream-border]"
+          style={{ border: '1px solid var(--cream-border)' }}
+        >
+          {capexList.map((e) => (
+            <div key={e.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div className="min-w-0">
+                <p className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{e.description}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                  {formatDate(e.expense_date)}
+                  {e.recipient_name && ` · ${e.recipient_name}`}
+                </p>
+              </div>
+              <p className="text-sm font-semibold shrink-0" style={{ color: 'var(--navy-900)' }}>
+                {formatRupiah(e.amount)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {!isKadiv && (
         <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-          Klik <strong>Tambah</strong> di dalam setiap kategori untuk menginput pengeluaran.
+          Klik <strong>Tambah</strong> di dalam setiap kategori untuk menginput pengeluaran OPEX.
+          Pengeluaran CAPEX diinput lewat halaman Laporan Pengeluaran (pilih Jenis Anggaran CAPEX).
           Data tersimpan otomatis ke departemen Anda.
         </p>
       )}

@@ -96,9 +96,12 @@ export interface ProgressItem {
   pic?: Profile
 }
 
+export type BudgetType = 'opex' | 'capex'
+
 export interface Expense {
   id: string
   category: ExpenseCategory
+  budget_type: BudgetType
   description: string
   amount: number
   expense_date: string

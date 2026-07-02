@@ -64,6 +64,23 @@ export function ExpenseForm() {
           style={{ borderTop: '1px solid var(--cream-border)' }}
         >
           <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Jenis Anggaran */}
+            <div className="sm:col-span-2 space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                Jenis Anggaran *
+              </label>
+              <select
+                name="budget_type"
+                required
+                defaultValue="opex"
+                className="w-full text-sm px-3 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-400"
+                style={{ border: '1px solid var(--cream-border)', background: 'var(--surface)' }}
+              >
+                <option value="opex">OPEX — Operasional</option>
+                <option value="capex">CAPEX — Perpanjangan & Pembaharuan HGB</option>
+              </select>
+            </div>
+
             {/* Tanggal */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>

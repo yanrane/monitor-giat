@@ -4,6 +4,7 @@ import { ExpenseForm } from '@/components/ExpenseForm'
 import { ExpenseTable } from '@/components/ExpenseTable'
 import { BudgetCard } from './BudgetCard'
 import { CapexCard } from './CapexCard'
+import { SectionDivider } from '@/components/SectionDivider'
 import { type Expense, type Profile } from '@/lib/types'
 import { Receipt } from 'lucide-react'
 
@@ -30,12 +31,17 @@ export default async function ExpensesPage() {
   const isKadiv     = currentUser.role === 'kadiv'
   const canInput    = currentUser.role !== 'kadiv'
 
-  // Pagu anggaran — staf boleh mengisi, tapi panel sisa hanya kadiv
+  // Pagu anggaran OPEX — staf boleh mengisi, tapi panel sisa hanya kadiv
   // (total pengeluaran yang terlihat non-kadiv cuma slice dept-nya)
   const { data: setting } = await supabase
     .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
   const pagu = setting?.value ? Number(setting.value) : null
-  const totalSpent = expenseList.reduce((sum, e) => sum + e.amount, 0)
+
+  // Pisah OPEX vs CAPEX — masing-masing pagu & pengeluaran sendiri
+  const opexList  = expenseList.filter((e) => e.budget_type !== 'capex')
+  const capexList = expenseList.filter((e) => e.budget_type === 'capex')
+  const opexTotal  = opexList.reduce((sum, e) => sum + e.amount, 0)
+  const capexTotal = capexList.reduce((sum, e) => sum + e.amount, 0)
 
   // Month filter: group by month for summary
   const months = [...new Set(expenseList.map((e) => e.expense_date.slice(0, 7)))].sort().reverse()
@@ -65,20 +71,28 @@ export default async function ExpensesPage() {
         </div>
       </div>
 
-      {/* Anggaran OPEX — kadiv panel penuh, staf strip edit pagu */}
-      <BudgetCard pagu={pagu} totalSpent={totalSpent} showRemaining={isKadiv} />
-
-      {/* Anggaran CAPEX — Perpanjangan & Pembaharuan HGB (kadiv) */}
-      {isKadiv && <CapexCard />}
-
-      {/* Input form (only non-kadiv) */}
+      {/* Input form (only non-kadiv) — pilih Jenis Anggaran OPEX/CAPEX di form */}
       {canInput && <ExpenseForm />}
 
-      {/* Expense table */}
+      {/* ══ SEKSI ANGGARAN OPEX ══ */}
+      <SectionDivider label="Anggaran OPEX — Operasional" />
+      <BudgetCard pagu={pagu} totalSpent={opexTotal} showRemaining={isKadiv} />
       <ExpenseTable
-        expenses={expenseList}
+        expenses={opexList}
         isKadiv={isKadiv}
         currentUserId={user.id}
+        emptyText="Belum ada pengeluaran OPEX."
+      />
+
+      {/* ══ SEKSI ANGGARAN CAPEX ══ */}
+      <SectionDivider label="Anggaran CAPEX — Perpanjangan & Pembaharuan HGB" />
+      {isKadiv && <CapexCard totalSpent={capexTotal} />}
+      <ExpenseTable
+        expenses={capexList}
+        isKadiv={isKadiv}
+        currentUserId={user.id}
+        hideSummary
+        emptyText="Belum ada pengeluaran CAPEX."
       />
     </div>
   )

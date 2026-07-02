@@ -9,6 +9,10 @@ interface ExpenseTableProps {
   expenses: Expense[]
   isKadiv: boolean
   currentUserId: string
+  // sembunyikan kartu ringkasan kategori + baris total (dipakai di seksi CAPEX
+  // yang sudah punya panel pagu/realisasi sendiri)
+  hideSummary?: boolean
+  emptyText?: string
 }
 
 const CATEGORY_ICONS: Record<ExpenseCategory, React.ElementType> = {
@@ -26,7 +30,7 @@ function formatDate(date: string) {
   return new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function ExpenseTable({ expenses, isKadiv, currentUserId }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, isKadiv, currentUserId, hideSummary = false, emptyText }: ExpenseTableProps) {
   const [loading, setLoading] = useState<string | null>(null)
 
   async function handleDelete(expenseId: string, description: string) {
@@ -49,14 +53,16 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId }: ExpenseTableP
         className="rounded-2xl px-4 py-10 text-center"
         style={{ border: '1px solid var(--cream-border)', background: 'white' }}
       >
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Belum ada data pengeluaran.</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{emptyText ?? 'Belum ada data pengeluaran.'}</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      {/* Summary cards */}
+      {/* Summary cards + grand total */}
+      {!hideSummary && (
+      <>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {(Object.keys(summary) as ExpenseCategory[]).map((cat) => {
           const Icon  = CATEGORY_ICONS[cat]
@@ -89,6 +95,8 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId }: ExpenseTableP
         <span className="text-sm font-semibold">Total Pengeluaran</span>
         <span className="text-base font-bold">{formatRupiah(grandTotal)}</span>
       </div>
+      </>
+      )}
 
       {/* Table */}
       <div

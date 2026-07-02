@@ -5,17 +5,20 @@ function formatRupiah(amount: number) {
   return 'Rp ' + amount.toLocaleString('id-ID')
 }
 
-export function CapexCard() {
+// totalSpent = realisasi pengeluaran CAPEX (expenses budget_type='capex')
+export function CapexCard({ totalSpent = 0 }: { totalSpent?: number }) {
+  const sisa = CAPEX_TOTAL - totalSpent
+  const pctUsed = Math.min(100, Math.round((totalSpent / CAPEX_TOTAL) * 100))
+  const overBudget = sisa < 0
+  const barColor = overBudget ? '#dc2626' : pctUsed >= 80 ? '#d97706' : '#059669'
+
   return (
     <div
       className="rounded-2xl overflow-hidden bg-white"
       style={{ border: '1px solid var(--cream-border)', boxShadow: '0 2px 8px rgba(11,25,41,0.06)' }}
     >
-      {/* Header */}
-      <div
-        className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
-        style={{ background: 'var(--navy-900)', color: 'white' }}
-      >
+      {/* Header: pagu − realisasi = sisa */}
+      <div className="px-4 py-3 space-y-3" style={{ background: 'var(--navy-900)', color: 'white' }}>
         <div className="flex items-center gap-2.5">
           <Landmark size={16} style={{ color: 'rgba(255,255,255,0.7)' }} />
           <div>
@@ -23,13 +26,31 @@ export function CapexCard() {
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{CAPEX_YEAR}</p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Pagu CAPEX</p>
-          <p className="text-base font-bold">{formatRupiah(CAPEX_TOTAL)}</p>
+        <div className="flex items-center gap-6 flex-wrap">
+          <div>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Pagu Anggaran CAPEX</p>
+            <p className="text-base font-bold">{formatRupiah(CAPEX_TOTAL)}</p>
+          </div>
+          <div>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Total Pengeluaran ({pctUsed}%)</p>
+            <p className="text-base font-bold">− {formatRupiah(totalSpent)}</p>
+          </div>
+          <div>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Sisa Anggaran CAPEX</p>
+            <p className="text-lg font-bold" style={{ color: overBudget ? '#fca5a5' : '#6ee7b7' }}>
+              {overBudget ? `− ${formatRupiah(Math.abs(sisa))}` : formatRupiah(sisa)}
+            </p>
+          </div>
         </div>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.15)' }}>
+          <div className="h-full rounded-full transition-all" style={{ width: `${pctUsed}%`, background: barColor }} />
+        </div>
+        {overBudget && (
+          <p className="text-xs" style={{ color: '#fca5a5' }}>⚠️ Pengeluaran CAPEX sudah melewati pagu</p>
+        )}
       </div>
 
-      {/* Items */}
+      {/* Rincian item pagu */}
       <div className="divide-y divide-[--cream-border]">
         {CAPEX_ITEMS.map((item, i) => (
           <div key={i} className="flex items-center justify-between gap-3 px-4 py-2.5">
@@ -39,15 +60,6 @@ export function CapexCard() {
             </p>
           </div>
         ))}
-      </div>
-
-      {/* Total */}
-      <div
-        className="flex items-center justify-between px-4 py-3"
-        style={{ background: 'var(--surface)', borderTop: '1px solid var(--cream-border)' }}
-      >
-        <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Total Anggaran CAPEX</span>
-        <span className="text-base font-bold" style={{ color: 'var(--navy-900)' }}>{formatRupiah(CAPEX_TOTAL)}</span>
       </div>
     </div>
   )
