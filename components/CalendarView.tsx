@@ -33,16 +33,19 @@ const STATUS_LABELS: Record<string, string> = {
   terlambat: 'Selesai Terlambat',
 }
 
-// Logika status sama dengan halaman Monitor Progress
-function getStatus(item: ProgressItem): keyof typeof STATUS_COLORS {
+// Logika status gabungan sama dengan halaman Monitor Progress
+// (multi-PIC = kerja tim, satu pekerjaan satu status)
+function getGroupStatus(members: ProgressItem[]): keyof typeof STATUS_COLORS {
   const today = new Date().toLocaleDateString('sv-SE')
-  if (item.status === 'done') {
-    const doneDate = item.completed_at
-      ? new Date(item.completed_at).toLocaleDateString('sv-SE')
-      : today
-    return doneDate <= item.target_date ? 'tepat_waktu' : 'terlambat'
+  const target = members[0].target_date
+  if (members.some((m) => m.status !== 'done')) {
+    return target < today ? 'melewati_target' : 'berjalan'
   }
-  return item.target_date < today ? 'melewati_target' : 'berjalan'
+  const late = members.some((m) => {
+    const doneDate = m.completed_at ? new Date(m.completed_at).toLocaleDateString('sv-SE') : today
+    return doneDate > target
+  })
+  return late ? 'terlambat' : 'tepat_waktu'
 }
 
 interface CalEvent {
@@ -50,7 +53,7 @@ interface CalEvent {
   title: string
   start: Date
   end: Date
-  resource: ProgressItem
+  resource: ProgressItem[]
 }
 
 export function CalendarView({ items }: { items: ProgressItem[] }) {
@@ -58,21 +61,30 @@ export function CalendarView({ items }: { items: ProgressItem[] }) {
   const [view, setView] = useState<View>('month')
   const router = useRouter()
 
-  const events: CalEvent[] = items.map((item) => {
-    const [y, m, d] = item.target_date.split('-').map(Number)
+  // Gabung baris multi-PIC jadi satu event per pekerjaan
+  const groups = new Map<string, ProgressItem[]>()
+  for (const item of items) {
+    const key = `${item.title}|${item.target_date}`
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push(item)
+  }
+
+  const events: CalEvent[] = [...groups.values()].map((members) => {
+    const [y, m, d] = members[0].target_date.split('-').map(Number)
     const day = new Date(y, m - 1, d)
+    const names = members.map((m) => m.pic?.full_name).filter(Boolean).join(', ')
     return {
-      id: item.id,
-      title: item.pic?.full_name ? `${item.title} — ${item.pic.full_name}` : item.title,
+      id: members[0].id,
+      title: names ? `${members[0].title} — ${names}` : members[0].title,
       start: day,
       end: day,
-      resource: item,
+      resource: members,
     }
   })
 
   const eventStyleGetter = useCallback((event: CalEvent) => ({
     style: {
-      backgroundColor: STATUS_COLORS[getStatus(event.resource)],
+      backgroundColor: STATUS_COLORS[getGroupStatus(event.resource)],
       borderRadius: '4px',
       color: 'white',
       border: 'none',
