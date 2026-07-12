@@ -44,21 +44,45 @@ export async function addProgressItem(formData: FormData) {
   revalidatePath('/progress')
 }
 
-// Pekerjaan tim: satu centang menyelesaikan semua baris PIC sekaligus
+// Pekerjaan tim: satu centang menyelesaikan semua baris PIC sekaligus.
+// RLS update hanya izinkan baris milik sendiri → anggota tim yang mencentang
+// cuma meng-update barisnya, baris rekan diam-diam tertinggal (grup tampil
+// belum selesai). Solusi: otorisasi dicek di sini, update se-grup via service_role.
 export async function toggleProgressItem(ids: string[], currentStatus: string) {
   if (ids.length === 0) return
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { data: rows } = await supabase.from('progress_items')
+    .select('title, target_date, created_by, pic_id')
+    .in('id', ids)
+  if (!rows || rows.length === 0) return
+
+  const { data: me } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  const isTeamMember = rows.some((r) => r.pic_id === user.id)
+  if (me?.role !== 'kadiv' && !isTeamMember) return
+
   const done = currentStatus !== 'done'
-  const { data: updated } = await supabase.from('progress_items').update({
-    status: done ? 'done' : 'pending',
-    completed_at: done ? new Date().toISOString() : null,
-  }).in('id', ids)
-    .select('title, target_date, created_by')
+  const admin = process.env.SUPABASE_SERVICE_ROLE_KEY ? createAdminClient() : supabase
+  if (done) {
+    // Hanya baris yang belum selesai — baris yang sudah done (centang lama
+    // per-orang) tetap pegang completed_at aslinya
+    await admin.from('progress_items').update({
+      status: 'done',
+      completed_at: new Date().toISOString(),
+    }).in('id', ids).neq('status', 'done')
+  } else {
+    await admin.from('progress_items').update({
+      status: 'pending',
+      completed_at: null,
+    }).in('id', ids)
+  }
 
   // Lapor balik ke pembuat (Kadiv) saat pekerjaan ditandai selesai
-  const first = updated?.[0]
+  const first = rows[0]
   if (done && first && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    const { data: { user } } = await supabase.auth.getUser()
     if (user && user.id !== first.created_by) {
       const { data: toggler } = await supabase
         .from('profiles').select('full_name').eq('id', user.id).single()
