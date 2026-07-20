@@ -5,7 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { type Department, type Activity, type ActivityStatus, type Profile } from '@/lib/types'
+import {
+  type Department, type Activity, type ActivityStatus, type Profile,
+  type ActivityPriority, type ControlStatus,
+  PRIORITY_LABELS, PRIORITY_HINT, CONTROL_STATUS_LABELS,
+} from '@/lib/types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -18,9 +22,26 @@ const schema = z.object({
   status:       z.enum(['belum_mulai', 'berjalan', 'selesai', 'ditunda'] as const),
   output_notes: z.string().optional(),
   pic_id:       z.string().optional(),
+  priority:     z.enum(['p1', 'p2', 'p3'] as const),
+  control_status:       z.string().optional(),
+  blocker:              z.string().optional(),
+  next_action:          z.string().optional(),
+  next_action_due_date: z.string().optional(),
+  decision_needed:      z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
+
+// Field yang dianggap "update substansi" — edit judul/tanggal biasa tidak dihitung
+const SUBSTANTIVE_FIELDS = [
+  'priority', 'control_status', 'blocker', 'next_action',
+  'next_action_due_date', 'decision_needed', 'output_notes',
+] as const
+
+const normalize = (v: string | null | undefined) => {
+  const t = typeof v === 'string' ? v.trim() : v
+  return t ? t : null
+}
 
 const inputStyle: React.CSSProperties = {
   background: 'var(--gray-100)',
@@ -65,16 +86,38 @@ export function ActivityForm({ department, userId, activity, deptMembers = [] }:
       status:       (activity?.status as ActivityStatus) ?? 'belum_mulai',
       output_notes: activity?.output_notes ?? '',
       pic_id:       activity?.pic_id ?? '',
+      priority:     activity?.priority ?? 'p2',
+      control_status:       activity?.control_status ?? '',
+      blocker:              activity?.blocker ?? '',
+      next_action:          activity?.next_action ?? '',
+      next_action_due_date: activity?.next_action_due_date?.slice(0, 10) ?? '',
+      decision_needed:      activity?.decision_needed ?? '',
     },
   })
 
   async function onSubmit(data: FormData) {
-    const payload = {
+    const isDone = data.status === 'selesai'
+    const payload: Record<string, unknown> = {
       ...data,
       pic_id: data.pic_id || null,
       dept_id: department.id,
       created_by: userId,
+      // Status kendali hanya relevan untuk pekerjaan yang belum selesai
+      control_status: isDone ? null : (normalize(data.control_status) as ControlStatus | null),
+      blocker:              normalize(data.blocker),
+      next_action:          normalize(data.next_action),
+      next_action_due_date: normalize(data.next_action_due_date),
+      decision_needed:      normalize(data.decision_needed),
     }
+
+    const substantiveChanged = !isEdit || SUBSTANTIVE_FIELDS.some(
+      (f) => normalize(payload[f] as string | null) !== normalize(activity![f])
+    )
+    if (substantiveChanged) {
+      payload.last_substantive_update_at = new Date().toISOString()
+      payload.last_substantive_update_by = userId
+    }
+
     let error
     if (isEdit) {
       ;({ error } = await supabase.from('activities').update(payload).eq('id', activity!.id))
@@ -89,6 +132,10 @@ export function ActivityForm({ department, userId, activity, deptMembers = [] }:
     router.push(`/departments/${department.id}`)
     router.refresh()
   }
+
+  const statusVal    = watch('status')
+  const showControl  = statusVal !== 'selesai'
+  const decisionFilled = !!watch('decision_needed')?.trim()
 
   const Label = ({ children }: { children: React.ReactNode }) => (
     <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
@@ -195,6 +242,123 @@ export function ActivityForm({ department, userId, activity, deptMembers = [] }:
             </Select>
           </div>
         )}
+      </div>
+
+      {/* ── Kendali Pekerjaan ─────────────────────────────── */}
+      <div className="pt-1">
+        <div className="flex items-center gap-3 mb-4">
+          <p className="text-xs font-bold uppercase tracking-widest shrink-0" style={{ color: 'var(--text-muted)' }}>
+            Kendali Pekerjaan
+          </p>
+          <div className="h-px flex-1" style={{ background: 'var(--gray-300)' }} />
+        </div>
+
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label>Prioritas</Label>
+              <Select
+                defaultValue={watch('priority')}
+                onValueChange={(val) => setValue('priority', val as ActivityPriority)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(PRIORITY_LABELS) as ActivityPriority[]).map((p) => (
+                    <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{PRIORITY_HINT}</p>
+            </div>
+
+            {showControl && (
+              <div>
+                <Label>Status Kendali</Label>
+                <Select
+                  defaultValue={watch('control_status') || 'none'}
+                  onValueChange={(val) => setValue('control_status', val === 'none' ? '' : val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih status kendali..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Belum diisi —</SelectItem>
+                    {(Object.keys(CONTROL_STATUS_LABELS) as ControlStatus[]).map((s) => (
+                      <SelectItem key={s} value={s}>{CONTROL_STATUS_LABELS[s]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {showControl && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Next Action</Label>
+                  <input
+                    {...register('next_action')}
+                    placeholder="Contoh: Kirim draf somasi ke Dept Head"
+                    className={inputCls}
+                    style={inputStyle}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </div>
+                <div>
+                  <Label>Target Next Action</Label>
+                  <input
+                    type="date"
+                    {...register('next_action_due_date')}
+                    className={inputCls}
+                    style={inputStyle}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Blocker (opsional)</Label>
+                <textarea
+                  {...register('blocker')}
+                  placeholder="Apa yang menghambat pekerjaan ini..."
+                  rows={2}
+                  className={`${inputCls} resize-none`}
+                  style={inputStyle}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                />
+              </div>
+
+              <div
+                className={decisionFilled ? 'rounded-xl p-3 -m-0.5' : undefined}
+                style={decisionFilled ? { background: '#fffbeb', border: '1px solid #fde68a' } : undefined}
+              >
+                <Label>
+                  Keputusan yang Dibutuhkan dari Kadiv (opsional)
+                  {decisionFilled && (
+                    <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full align-middle" style={{ background: '#fde68a', color: '#92400e' }}>
+                      MASUK DECISION QUEUE
+                    </span>
+                  )}
+                </Label>
+                <textarea
+                  {...register('decision_needed')}
+                  placeholder="Isi hanya jika ada keputusan yang harus diambil Kadiv..."
+                  rows={2}
+                  className={`${inputCls} resize-none`}
+                  style={inputStyle}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div>

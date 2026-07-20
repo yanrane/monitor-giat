@@ -2,12 +2,14 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { DepartmentBoard } from '@/components/DepartmentBoard'
+import { DecisionQueue } from '@/components/DecisionQueue'
+import { StaleActivities, type StaleActivity } from '@/components/StaleActivities'
 import { type Activity, type Department, type Task, DEPT_BG_COLORS } from '@/lib/types'
 import {
   TrendingUp, CheckSquare, AlertTriangle, LayoutList,
   CheckCircle2, Clock, ArrowRight, ClipboardList,
 } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { formatDate, daysSinceWIB, staleLevel } from '@/lib/utils'
 
 interface TaskWithActivity extends Task {
   activities: Activity & { departments: Department }
@@ -60,6 +62,33 @@ export default async function DashboardPage() {
   const todayT     = pending.filter(t => t.due_date === today)
   const urgentList = [...overdueT, ...todayT].slice(0, 8)
 
+  // ── Legal Command System ────────────────────────────────
+  const isOpen = (a: Activity) => a.status !== 'selesai' && a.status !== 'ditunda'
+
+  const decisionQueue = acts
+    .filter((a) => isOpen(a) && (
+      a.decision_needed ||
+      a.control_status === 'needs_kadiv_decision' ||
+      a.control_status === 'escalated'
+    ))
+    .sort((a, b) =>
+      // P1 dulu, lalu target next action terdekat (tanpa target di belakang),
+      // lalu yang paling lama tidak di-update
+      a.priority.localeCompare(b.priority) ||
+      (a.next_action_due_date ?? '9999').localeCompare(b.next_action_due_date ?? '9999') ||
+      (a.last_substantive_update_at ?? '').localeCompare(b.last_substantive_update_at ?? '')
+    )
+
+  const staleItems: StaleActivity[] = acts
+    .filter(isOpen)
+    .map((a) => ({
+      activity: a,
+      days: daysSinceWIB(a.last_substantive_update_at ?? a.updated_at),
+      level: staleLevel(daysSinceWIB(a.last_substantive_update_at ?? a.updated_at)),
+    }))
+    .filter((i): i is StaleActivity => i.level !== 'ok')
+    .sort((a, b) => b.days - a.days)
+
   const activityStats = [
     { value: totalActs,    label: 'Total Kegiatan',   color: 'var(--navy-900)', bg: 'var(--surface)',  Icon: LayoutList    },
     { value: activeActs,   label: 'Sedang Berjalan',  color: '#d97706',         bg: '#fffbeb',         Icon: TrendingUp    },
@@ -99,6 +128,12 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* ── Decision Queue Kadiv ──────────────────────────── */}
+      <DecisionQueue activities={decisionQueue} />
+
+      {/* ── Kegiatan Tanpa Update Substansi ───────────────── */}
+      <StaleActivities items={staleItems} />
 
       {/* ── Pekerjaan Perlu Perhatian ─────────────────────── */}
       {urgentList.length > 0 && (

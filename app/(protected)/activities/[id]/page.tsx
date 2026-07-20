@@ -2,6 +2,8 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { StatusBadge } from '@/components/StatusBadge'
+import { PriorityBadge } from '@/components/PriorityBadge'
+import { ActivityControlCard } from '@/components/ActivityControlCard'
 import { CommentThread } from '@/components/CommentThread'
 import { FileUploader } from '@/components/FileUploader'
 import { TaskList } from '@/components/TaskList'
@@ -24,7 +26,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
     { data: profile },
     { data: tasks },
   ] = await Promise.all([
-    supabase.from('activities').select('*, departments(name), profiles!created_by(full_name), pic:profiles!pic_id(full_name)').eq('id', id).single(),
+    supabase.from('activities').select('*, departments(name), profiles!created_by(full_name), pic:profiles!pic_id(full_name), last_updater:profiles!last_substantive_update_by(full_name)').eq('id', id).single(),
     supabase.from('comments').select('*, profiles(full_name, role)').eq('activity_id', id).order('created_at'),
     supabase.from('attachments').select('*, profiles(full_name)').eq('activity_id', id).order('created_at'),
     supabase.from('profiles').select('*, departments(name)').eq('id', user.id).single(),
@@ -88,6 +90,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           </h1>
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={act.status} />
+            <PriorityBadge priority={act.priority} />
             <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
               <CalendarDays size={12} />
               {formatDate(act.start_date)} — {formatDate(act.end_date)}
@@ -104,6 +107,9 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           </div>
         </div>
       </div>
+
+      {/* Kendali Pekerjaan */}
+      <ActivityControlCard activity={act} />
 
       {/* Tabs */}
       <Tabs defaultValue="tasks">

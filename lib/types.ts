@@ -1,5 +1,13 @@
 export type Role = 'kadiv' | 'dept_head' | 'staff'
 export type ActivityStatus = 'belum_mulai' | 'berjalan' | 'selesai' | 'ditunda'
+export type ActivityPriority = 'p1' | 'p2' | 'p3'
+export type ControlStatus =
+  | 'on_track'
+  | 'waiting_internal'
+  | 'waiting_external'
+  | 'needs_kadiv_decision'
+  | 'blocked'
+  | 'escalated'
 export type TaskStatus = 'pending' | 'done'
 export type ExpenseCategory = 'tiket' | 'honor' | 'hotel' | 'sewa_kendaraan' | 'lainnya'
 export type NotificationType = 'status_change' | 'new_comment' | 'deadline_reminder' | 'briefing'
@@ -33,12 +41,21 @@ export interface Activity {
   status: ActivityStatus
   output_notes: string | null
   pic_id: string | null
+  priority: ActivityPriority
+  control_status: ControlStatus | null
+  blocker: string | null
+  next_action: string | null
+  next_action_due_date: string | null
+  decision_needed: string | null
+  last_substantive_update_at: string | null
+  last_substantive_update_by: string | null
   created_by: string
   created_at: string
   updated_at: string
   departments?: Department
   profiles?: Profile
   pic?: Profile
+  last_updater?: Profile
   tasks?: Pick<Task, 'id' | 'status'>[]
 }
 
@@ -141,6 +158,41 @@ export const STATUS_COLORS: Record<ActivityStatus, string> = {
   berjalan: 'bg-yellow-100 text-yellow-800',
   selesai: 'bg-green-100 text-green-800',
   ditunda: 'bg-red-100 text-red-800',
+}
+
+export const PRIORITY_LABELS: Record<ActivityPriority, string> = {
+  p1: 'P1 — Kritis',
+  p2: 'P2 — Penting',
+  p3: 'P3 — Rutin',
+}
+
+// P1: BRN/smelter, litigasi/pidana material, risiko SHGB/HGB & aset kritis,
+// deadline regulator/Direksi. Klasifikasi dilakukan manual, bukan otomatis.
+export const PRIORITY_HINT =
+  'P1 untuk perkara BRN/smelter, litigasi material, risiko aset/SHGB kritis, atau deadline regulator/Direksi'
+
+export const PRIORITY_COLORS: Record<ActivityPriority, string> = {
+  p1: 'bg-red-100 text-red-800 border-red-200',
+  p2: 'bg-blue-100 text-blue-800 border-blue-200',
+  p3: 'bg-gray-100 text-gray-600 border-gray-200',
+}
+
+export const CONTROL_STATUS_LABELS: Record<ControlStatus, string> = {
+  on_track: 'Sesuai Rencana',
+  waiting_internal: 'Menunggu Internal',
+  waiting_external: 'Menunggu Pihak Eksternal',
+  needs_kadiv_decision: 'Butuh Keputusan Kadiv',
+  blocked: 'Terhambat',
+  escalated: 'Eskalasi',
+}
+
+export const CONTROL_STATUS_COLORS: Record<ControlStatus, string> = {
+  on_track: 'bg-green-100 text-green-800 border-green-200',
+  waiting_internal: 'bg-amber-100 text-amber-800 border-amber-200',
+  waiting_external: 'bg-orange-100 text-orange-800 border-orange-200',
+  needs_kadiv_decision: 'bg-purple-100 text-purple-800 border-purple-200',
+  blocked: 'bg-red-100 text-red-800 border-red-200',
+  escalated: 'bg-red-100 text-red-800 border-red-200',
 }
 
 export const DEPT_COLORS: Record<string, string> = {
