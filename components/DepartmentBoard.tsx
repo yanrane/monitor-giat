@@ -49,32 +49,40 @@ export function DepartmentBoard({ department, activities, canAdd = false }: Depa
           borderBottom: collapsed ? 'none' : `1px solid ${accent}20`,
         }}
       >
-        <div className="w-3 h-3 rounded-full shrink-0" style={{ background: accent }} />
-        <span className="font-bold text-sm flex-1 text-left" style={{ color: 'var(--text-primary)' }}>
+        <div className="w-2.5 h-2.5 rounded shrink-0" style={{ background: accent }} />
+        <span className="font-bold text-sm text-left" style={{ color: 'var(--text-primary)' }}>
           {department.name}
         </span>
-        <div className="flex items-center gap-3">
+        {totalActs > 0 && progress === 100 && (
+          <span
+            className="text-[10px] font-bold tracking-wider px-1.5 py-px rounded"
+            style={{ background: 'var(--ok-bg)', color: 'var(--ok)' }}
+          >
+            TUNTAS
+          </span>
+        )}
+        <div className="flex items-center gap-3 flex-1 justify-end">
           {activeActs > 0 && (
             <span
-              className="text-xs font-semibold px-2 py-0.5 rounded-full"
-              style={{ background: '#fef3c7', color: '#92400e' }}
+              className="text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums"
+              style={{ background: 'var(--warn-bg)', color: 'var(--warn)' }}
             >
               {activeActs} berjalan
             </span>
           )}
-          <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+          <span className="text-xs font-medium tabular-nums" style={{ color: 'var(--text-muted)' }}>
             {doneActs}/{totalActs} selesai
           </span>
           {/* mini progress bar */}
           {totalActs > 0 && (
             <div className="hidden sm:flex items-center gap-1.5">
-              <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
+              <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
                 <div
                   className="h-full rounded-full transition-all"
                   style={{ width: `${progress}%`, background: accent }}
                 />
               </div>
-              <span className="text-xs font-bold" style={{ color: accent }}>{progress}%</span>
+              <span className="text-xs font-bold tabular-nums" style={{ color: accent }}>{progress}%</span>
             </div>
           )}
           {collapsed ? <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />}
@@ -152,14 +160,14 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
     <Link href={`/activities/${activity.id}`}>
       {/* Desktop row */}
       <div
-        className="hidden sm:grid items-center px-4 py-3 hover:bg-blue-50/40 transition-colors cursor-pointer group"
+        className="hidden sm:grid items-center px-4 py-3 hover:bg-[--surface-2] transition-colors cursor-pointer group"
         style={{ gridTemplateColumns: '1fr 130px 120px 110px 120px' }}
       >
         {/* Name */}
         <div className="flex items-center gap-2.5 min-w-0 pr-3">
           <div className="w-0.5 h-8 rounded-full shrink-0" style={{ background: accent }} />
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate group-hover:text-blue-700 transition-colors" style={{ color: 'var(--text-primary)' }}>
+            <p className="text-sm font-medium truncate transition-colors" style={{ color: 'var(--text-primary)' }}>
               {activity.title}
             </p>
             {(isOverdue || isUrgent) && (
@@ -213,7 +221,7 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
 
       {/* Mobile card */}
       <div
-        className="sm:hidden flex items-start gap-3 px-4 py-3 hover:bg-blue-50/40 transition-colors"
+        className="sm:hidden flex items-start gap-3 px-4 py-3 hover:bg-[--surface-2] transition-colors"
       >
         <StatusIcon size={15} className="mt-0.5 shrink-0" style={{ color: dotColor }} />
         <div className="flex-1 min-w-0">

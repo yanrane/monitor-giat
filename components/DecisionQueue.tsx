@@ -12,24 +12,26 @@ export function DecisionQueue({ activities }: { activities: Activity[] }) {
   return (
     <div
       className="rounded-2xl overflow-hidden"
-      style={{ border: '1px solid #e9d5ff', boxShadow: '0 2px 8px rgba(126,34,206,0.08)' }}
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(11,25,41,0.05)' }}
     >
       <div
         className="flex items-center gap-2 px-4 py-3"
-        style={{ background: '#faf5ff', borderBottom: '1px solid #e9d5ff' }}
+        style={{ borderBottom: '1px solid var(--separator)' }}
       >
-        <Gavel size={14} style={{ color: '#7e22ce' }} />
-        <span className="text-sm font-bold" style={{ color: '#7e22ce' }}>
-          Decision Queue Kadiv
+        <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: '#f3ebfb' }}>
+          <Gavel size={13} style={{ color: '#6d4fc4' }} />
+        </span>
+        <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Menunggu keputusan Kadiv
         </span>
         <span
-          className="text-xs font-bold px-2 py-0.5 rounded-full"
-          style={{ background: '#7e22ce18', color: '#7e22ce' }}
+          className="text-xs font-bold px-2 py-0.5 rounded-md tabular-nums"
+          style={{ background: '#f3ebfb', color: '#6d4fc4', border: '1px solid #e0d3f5' }}
         >
           {activities.length}
         </span>
-        <span className="text-xs ml-auto hidden sm:block" style={{ color: 'var(--text-muted)' }}>
-          Kegiatan yang menunggu keputusan Anda
+        <span className="text-xs ml-auto hidden sm:block" style={{ color: 'var(--text-tertiary)' }}>
+          kegiatan yang menunggu keputusan Anda
         </span>
       </div>
 

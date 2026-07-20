@@ -71,9 +71,9 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
           <div className="flex items-center gap-3">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: 'var(--blue)' }}
+              style={{ background: 'var(--brass)' }}
             >
-              <Scale size={15} className="text-white" />
+              <Scale size={15} style={{ color: 'var(--navy-950)' }} />
             </div>
             <div className="hidden sm:block">
               <p className="text-white font-semibold text-sm leading-none tracking-tight">Monitor Kegiatan</p>
@@ -95,7 +95,7 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
                   <Avatar className="w-7 h-7">
                     <AvatarFallback
                       className="text-xs font-semibold"
-                      style={{ background: 'var(--blue)', color: 'white' }}
+                      style={{ background: 'var(--navy-600)', color: 'white' }}
                     >
                       {initials}
                     </AvatarFallback>
@@ -134,8 +134,8 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
       <div className="flex flex-1 max-w-7xl mx-auto w-full">
         {/* Sidebar (desktop) */}
         <nav
-          className="hidden md:flex flex-col w-52 shrink-0 pt-5 pr-2 pb-6 pl-2 gap-0.5 border-r"
-          style={{ borderColor: 'var(--separator)', background: 'var(--surface)' }}
+          className="hidden md:flex flex-col w-52 shrink-0 pt-5 pr-2 pb-6 pl-2 gap-0.5"
+          style={{ background: 'linear-gradient(180deg, var(--navy-950), var(--navy-900))' }}
         >
           {navItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -144,16 +144,22 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-100',
-                  active ? '' : 'hover:bg-[--gray-100]'
+                  'relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-100',
+                  active ? '' : 'hover:bg-white/[0.06] hover:text-white'
                 )}
                 style={
                   active
-                    ? { background: 'var(--blue-light)', color: 'var(--blue)', fontWeight: 600 }
-                    : { color: 'var(--text-muted)' }
+                    ? { background: 'rgba(176,134,47,0.16)', color: '#fff', fontWeight: 600 }
+                    : { color: '#b4c2d8' }
                 }
               >
-                <item.icon size={15} />
+                {active && (
+                  <span
+                    className="absolute -left-2 top-1.5 bottom-1.5 w-[3px] rounded-r"
+                    style={{ background: 'var(--brass)' }}
+                  />
+                )}
+                <item.icon size={15} style={active ? { color: 'var(--brass)' } : undefined} />
                 {item.label}
               </Link>
             )
@@ -163,10 +169,10 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
           {!isKadiv && profile.departments && (
             <div
               className="mt-auto mx-1 rounded-xl p-3"
-              style={{ background: 'var(--gray-100)', border: '1px solid var(--separator)' }}
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
             >
-              <p className="text-xs font-semibold mb-0.5" style={{ color: 'var(--text-secondary)' }}>Departemen</p>
-              <p className="text-xs leading-snug" style={{ color: 'var(--text-muted)' }}>
+              <p className="text-xs font-semibold mb-0.5" style={{ color: '#e8eef7' }}>Departemen</p>
+              <p className="text-xs leading-snug" style={{ color: '#8fa2c0' }}>
                 {profile.departments.name}
               </p>
             </div>
@@ -196,7 +202,7 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
                 key={item.href}
                 href={item.href}
                 className="flex flex-col items-center gap-1 py-2.5 px-2 transition-colors"
-                style={{ color: active ? '#60a5fa' : 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: active ? 600 : 400 }}
+                style={{ color: active ? '#d9b45f' : 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: active ? 600 : 400 }}
               >
                 <item.icon size={19} />
                 <span>{item.label}</span>

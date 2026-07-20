@@ -27,43 +27,55 @@
   --navy-100: #e8eef8;
   --navy-50:  #f2f5fb;
 
-  /* Text */
-  --text-primary:   #1d1d1f;
-  --text-secondary: #3a3a3c;
-  --text-muted:     #6e6e73;
-  --text-tertiary:  #a1a1a6;
+  /* Brass (aksen identitas — emas timah) */
+  --brass:      #b0862f;
+  --brass-deep: #8f6c1f;
+  --brass-soft: #f7f0dd;
+  --brass-line: #e2d3a8;
 
-  /* Surfaces */
-  --background:   #f5f5f7;
+  /* Semantic status (dikalibrasi lebih dalam, tidak menyala) */
+  --ok:      #1e7a56;  --ok-bg:   #e9f5ef;
+  --warn:    #a05c0a;  --warn-bg: #fdf3e3;
+  --bad:     #b3362a;  --bad-bg:  #fbeeec;
+  --run:     #2458a6;  --run-bg:  #e9f1fb;
+
+  /* Text */
+  --text-primary:   #16202e;
+  --text-secondary: #3d4a5c;
+  --text-muted:     #6b7686;
+  --text-tertiary:  #9aa4b2;
+
+  /* Surfaces — putih gading hangat */
+  --background:   #f4f3ef;
   --surface:      #ffffff;
-  --surface-2:    #f5f5f7;
-  --border:       #d2d2d7;
-  --separator:    #e8e8ed;
+  --surface-2:    #faf9f6;
+  --border:       #ddd9cf;
+  --separator:    #eceae3;
 
   /* shadcn compat */
   --card:                  #ffffff;
-  --card-foreground:       #1d1d1f;
+  --card-foreground:       #16202e;
   --popover:               #ffffff;
-  --popover-foreground:    #1d1d1f;
+  --popover-foreground:    #16202e;
   --primary:               #0071e3;
   --primary-foreground:    #ffffff;
-  --secondary:             #f5f5f7;
-  --secondary-foreground:  #1d1d1f;
-  --muted:                 #f5f5f7;
-  --muted-foreground:      #6e6e73;
+  --secondary:             #f4f3ef;
+  --secondary-foreground:  #16202e;
+  --muted:                 #f4f3ef;
+  --muted-foreground:      #6b7686;
   --accent:                #e8f1fd;
   --accent-foreground:     #0071e3;
-  --destructive:           #ff3b30;
-  --foreground:            #1d1d1f;
-  --input:                 #f5f5f7;
+  --destructive:           #b3362a;
+  --foreground:            #16202e;
+  --input:                 #f4f3ef;
   --ring:                  #0071e3;
-  --border-color:          #d2d2d7;
+  --border-color:          #ddd9cf;
   --radius:                0.75rem;
 
   /* Legacy aliases — keep for compatibility */
-  --cream:        #f5f5f7;
-  --cream-dark:   #e8e8ed;
-  --cream-border: #d2d2d7;
+  --cream:        #f4f3ef;
+  --cream-dark:   #eceae3;
+  --cream-border: #ddd9cf;
 }
 
 @theme inline {
@@ -143,10 +155,10 @@ body {
 }
 
 /* ── Status badges ──────────────────────────────────────────── */
-.status-belum_mulai { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
-.status-berjalan    { color: #92400e; background: #fffbeb; border-color: #fde68a; }
-.status-selesai     { color: #065f46; background: #ecfdf5; border-color: #a7f3d0; }
-.status-ditunda     { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
+.status-belum_mulai { color: var(--run);  background: var(--run-bg);  border-color: #c9dcf3; }
+.status-berjalan    { color: var(--warn); background: var(--warn-bg); border-color: #eed9b4; }
+.status-selesai     { color: var(--ok);   background: var(--ok-bg);   border-color: #bfe3d2; }
+.status-ditunda     { color: var(--bad);  background: var(--bad-bg);  border-color: #efcfca; }
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
