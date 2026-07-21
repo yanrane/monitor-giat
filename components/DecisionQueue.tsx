@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { type Activity, CONTROL_STATUS_LABELS, DEPT_BG_COLORS } from '@/lib/types'
 import { PriorityBadge } from '@/components/PriorityBadge'
 import { formatDate } from '@/lib/utils'
-import { Gavel } from 'lucide-react'
+import { Gavel, ChevronDown } from 'lucide-react'
 
 const GRID = '90px 1fr 130px 110px 160px'
 
@@ -10,14 +10,12 @@ export function DecisionQueue({ activities }: { activities: Activity[] }) {
   if (activities.length === 0) return null
 
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
+    <details
+      className="group rounded-2xl overflow-hidden"
       style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(11,25,41,0.05)' }}
     >
-      <div
-        className="flex items-center gap-2 px-4 py-3"
-        style={{ borderBottom: '1px solid var(--separator)' }}
-      >
+      {/* Header — dropdown, default terlipat supaya dashboard rapi */}
+      <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden transition-colors hover:bg-[--surface-2]">
         <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: '#f3ebfb' }}>
           <Gavel size={13} style={{ color: '#6d4fc4' }} />
         </span>
@@ -30,10 +28,18 @@ export function DecisionQueue({ activities }: { activities: Activity[] }) {
         >
           {activities.length}
         </span>
-        <span className="text-xs ml-auto hidden sm:block" style={{ color: 'var(--text-tertiary)' }}>
-          kegiatan yang menunggu keputusan Anda
+        <span className="ml-auto flex items-center gap-2">
+          <span className="hidden sm:block text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <span className="group-open:hidden">klik untuk membuka</span>
+            <span className="hidden group-open:inline">kegiatan yang menunggu keputusan Anda</span>
+          </span>
+          <ChevronDown
+            size={15}
+            className="shrink-0 transition-transform group-open:rotate-180"
+            style={{ color: 'var(--text-muted)' }}
+          />
         </span>
-      </div>
+      </summary>
 
       {/* Column headers */}
       <div
@@ -42,6 +48,7 @@ export function DecisionQueue({ activities }: { activities: Activity[] }) {
           gridTemplateColumns: GRID,
           color: 'var(--text-muted)',
           background: 'var(--surface)',
+          borderTop: '1px solid var(--separator)',
           borderBottom: '1px solid var(--cream-border)',
         }}
       >
@@ -100,6 +107,6 @@ export function DecisionQueue({ activities }: { activities: Activity[] }) {
           )
         })}
       </div>
-    </div>
+    </details>
   )
 }
