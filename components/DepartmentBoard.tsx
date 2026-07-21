@@ -20,10 +20,10 @@ const STATUS_ICONS = {
 }
 
 const STATUS_DOT_COLORS = {
-  belum_mulai: '#3b82f6',
-  berjalan: '#f59e0b',
-  selesai: '#10b981',
-  ditunda: '#ef4444',
+  belum_mulai: '#2458a6',
+  berjalan: '#a05c0a',
+  selesai: '#1e7a56',
+  ditunda: '#b3362a',
 }
 
 export function DepartmentBoard({ department, activities, canAdd = false }: DepartmentBoardProps) {
@@ -171,7 +171,7 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
               {activity.title}
             </p>
             {(isOverdue || isUrgent) && (
-              <p className="text-xs mt-0.5 font-medium" style={{ color: isOverdue ? '#991b1b' : '#92400e' }}>
+              <p className="text-xs mt-0.5 font-medium" style={{ color: isOverdue ? '#b3362a' : '#a05c0a' }}>
                 {isOverdue ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi`}
               </p>
             )}
@@ -192,7 +192,7 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
         </div>
 
         {/* Target selesai */}
-        <div className="text-xs" style={{ color: isOverdue ? '#991b1b' : 'var(--text-muted)' }}>
+        <div className="text-xs" style={{ color: isOverdue ? '#b3362a' : 'var(--text-muted)' }}>
           {formatDate(activity.end_date)}
         </div>
 
@@ -205,7 +205,7 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
                   className="h-full rounded-full transition-all"
                   style={{
                     width: `${taskPct}%`,
-                    background: taskPct === 100 ? '#10b981' : accent,
+                    background: taskPct === 100 ? '#1e7a56' : accent,
                   }}
                 />
               </div>

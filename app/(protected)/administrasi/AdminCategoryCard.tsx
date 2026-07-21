@@ -148,8 +148,8 @@ export function AdminCategoryCard({
                             className="opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-70"
                           >
                             {loading === expense.id
-                              ? <Loader2 size={13} className="animate-spin" style={{ color: '#dc2626' }} />
-                              : <Trash2 size={13} style={{ color: '#dc2626' }} />
+                              ? <Loader2 size={13} className="animate-spin" style={{ color: '#b3362a' }} />
+                              : <Trash2 size={13} style={{ color: '#b3362a' }} />
                             }
                           </button>
                         )}
@@ -237,7 +237,7 @@ export function AdminCategoryCard({
               </div>
 
               {error && (
-                <p className="text-xs px-3 py-2 rounded-lg" style={{ background: '#fef2f2', color: '#dc2626' }}>
+                <p className="text-xs px-3 py-2 rounded-lg" style={{ background: '#fbeeec', color: '#b3362a' }}>
                   {error}
                 </p>
               )}

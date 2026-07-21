@@ -90,7 +90,7 @@ export function ProgressForm({ people }: { people: Profile[] }) {
             style={{
               ...inputStyle,
               color: selected.size > 0 ? 'var(--text-primary)' : 'var(--text-muted)',
-              borderColor: open ? 'var(--blue, #2563eb)' : 'var(--cream-border)',
+              borderColor: open ? 'var(--blue, #2458a6)' : 'var(--cream-border)',
             }}
           >
             <span className="truncate">
@@ -148,8 +148,8 @@ export function ProgressForm({ people }: { people: Profile[] }) {
                           <span
                             className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px] text-white"
                             style={{
-                              border: `1px solid ${active ? 'var(--blue, #2563eb)' : 'var(--gray-300, #d1d5db)'}`,
-                              background: active ? 'var(--blue, #2563eb)' : 'white',
+                              border: `1px solid ${active ? 'var(--blue, #2458a6)' : 'var(--gray-300, #d1d5db)'}`,
+                              background: active ? 'var(--blue, #2458a6)' : 'white',
                             }}
                           >
                             {active && '✓'}
@@ -180,7 +180,7 @@ export function ProgressForm({ people }: { people: Profile[] }) {
           type="submit"
           disabled={loading}
           className="h-9 px-4 rounded-lg text-sm font-semibold text-white flex items-center justify-center gap-1.5 transition-opacity hover:opacity-90 disabled:opacity-60"
-          style={{ background: 'var(--blue, #2563eb)' }}
+          style={{ background: 'var(--blue, #2458a6)' }}
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
           Tambah
@@ -196,7 +196,7 @@ export function ProgressForm({ people }: { people: Profile[] }) {
               <span
                 key={id}
                 className="flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-medium"
-                style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}
+                style={{ background: '#e9f1fb', color: '#2458a6', border: '1px solid #c9dcf3' }}
               >
                 {p.full_name}
                 <button

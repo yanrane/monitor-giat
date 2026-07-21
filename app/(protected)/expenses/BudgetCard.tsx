@@ -35,7 +35,7 @@ export function BudgetCard({ pagu, totalSpent, children }: BudgetCardProps) {
   const sisa = pagu !== null ? pagu - totalSpent : null
   const pctUsed = pagu ? Math.min(100, Math.round((totalSpent / pagu) * 100)) : 0
   const overBudget = sisa !== null && sisa < 0
-  const barColor = overBudget ? '#dc2626' : pctUsed >= 80 ? '#d97706' : '#059669'
+  const barColor = overBudget ? '#b3362a' : pctUsed >= 80 ? '#a05c0a' : '#1e7a56'
 
   const editDialog = (
     <Dialog open={open} onOpenChange={setOpen}>

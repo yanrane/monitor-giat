@@ -336,12 +336,12 @@ export function ActivityForm({ department, userId, activity, deptMembers = [] }:
 
               <div
                 className={decisionFilled ? 'rounded-xl p-3 -m-0.5' : undefined}
-                style={decisionFilled ? { background: '#fffbeb', border: '1px solid #fde68a' } : undefined}
+                style={decisionFilled ? { background: '#fdf3e3', border: '1px solid #eed9b4' } : undefined}
               >
                 <Label>
                   Keputusan yang Dibutuhkan dari Kadiv (opsional)
                   {decisionFilled && (
-                    <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full align-middle" style={{ background: '#fde68a', color: '#92400e' }}>
+                    <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full align-middle" style={{ background: '#eed9b4', color: '#a05c0a' }}>
                       MASUK DECISION QUEUE
                     </span>
                   )}

@@ -44,16 +44,16 @@ export function DepartmentCard({ department, activities }: { department: Departm
           {total > 0 && (
             <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden mb-3">
               {counts.selesai > 0 && (
-                <div className="transition-all" style={{ flex: counts.selesai, background: '#059669' }} />
+                <div className="transition-all" style={{ flex: counts.selesai, background: '#1e7a56' }} />
               )}
               {counts.berjalan > 0 && (
-                <div className="transition-all" style={{ flex: counts.berjalan, background: '#d97706' }} />
+                <div className="transition-all" style={{ flex: counts.berjalan, background: '#a05c0a' }} />
               )}
               {counts.belum_mulai > 0 && (
-                <div className="transition-all" style={{ flex: counts.belum_mulai, background: '#3b82f6' }} />
+                <div className="transition-all" style={{ flex: counts.belum_mulai, background: '#2458a6' }} />
               )}
               {counts.ditunda > 0 && (
-                <div className="transition-all" style={{ flex: counts.ditunda, background: '#dc2626' }} />
+                <div className="transition-all" style={{ flex: counts.ditunda, background: '#b3362a' }} />
               )}
             </div>
           )}
@@ -63,10 +63,10 @@ export function DepartmentCard({ department, activities }: { department: Departm
 
           <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
             {[
-              { dot: '#3b82f6', label: 'Belum mulai', count: counts.belum_mulai },
-              { dot: '#d97706', label: 'Berjalan',    count: counts.berjalan    },
-              { dot: '#059669', label: 'Selesai',     count: counts.selesai     },
-              { dot: '#dc2626', label: 'Ditunda',     count: counts.ditunda     },
+              { dot: '#2458a6', label: 'Belum mulai', count: counts.belum_mulai },
+              { dot: '#a05c0a', label: 'Berjalan',    count: counts.berjalan    },
+              { dot: '#1e7a56', label: 'Selesai',     count: counts.selesai     },
+              { dot: '#b3362a', label: 'Ditunda',     count: counts.ditunda     },
             ].map(({ dot, label, count }) => (
               <div key={label} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: dot }} />

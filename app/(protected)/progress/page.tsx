@@ -70,7 +70,7 @@ function StatCard({ value, label, color, bg, icon, href, active }: {
       style={{
         background: active ? bg : 'var(--surface)',
         border: `1px solid ${active ? color : 'var(--border)'}`,
-        boxShadow: active ? `0 0 0 2px ${color}30` : '0 1px 4px rgba(11,25,41,0.05)',
+        boxShadow: active ? `0 0 0 2px color-mix(in srgb, ${color} 30%, transparent)` : '0 1px 4px rgba(11,25,41,0.05)',
       }}
     >
       <div>

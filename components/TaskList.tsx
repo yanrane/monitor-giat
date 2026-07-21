@@ -57,7 +57,7 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
             Daftar Pekerjaan
           </p>
           {total > 0 && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: '#f0fdf4', color: '#059669' }}>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: '#e9f5ef', color: '#1e7a56' }}>
               {done}/{total} selesai
             </span>
           )}
@@ -81,10 +81,10 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
             <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--cream-dark)' }}>
               <div
                 className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${pct}%`, background: pct === 100 ? '#10b981' : '#3b82f6' }}
+                style={{ width: `${pct}%`, background: pct === 100 ? '#1e7a56' : '#2458a6' }}
               />
             </div>
-            <span className="text-xs font-bold w-10 text-right" style={{ color: pct === 100 ? '#059669' : 'var(--text-muted)' }}>
+            <span className="text-xs font-bold w-10 text-right" style={{ color: pct === 100 ? '#1e7a56' : 'var(--text-muted)' }}>
               {pct}%
             </span>
           </div>
@@ -109,7 +109,7 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
             <div
               key={task.id}
               className="flex items-start gap-3 px-4 py-3 group transition-colors"
-              style={{ background: isDone ? '#f0fdf4' : 'white' }}
+              style={{ background: isDone ? '#e9f5ef' : 'white' }}
             >
               {/* Toggle button */}
               {canEdit ? (
@@ -119,9 +119,9 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
                   className="mt-0.5 shrink-0 transition-colors hover:opacity-70"
                 >
                   {isLoading && loading === task.id ? (
-                    <Loader2 size={18} className="animate-spin" style={{ color: '#3b82f6' }} />
+                    <Loader2 size={18} className="animate-spin" style={{ color: '#2458a6' }} />
                   ) : isDone ? (
-                    <CheckCircle2 size={18} style={{ color: '#10b981' }} />
+                    <CheckCircle2 size={18} style={{ color: '#1e7a56' }} />
                   ) : (
                     <Circle size={18} style={{ color: '#9ca3af' }} />
                   )}
@@ -129,7 +129,7 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
               ) : (
                 <div className="mt-0.5 shrink-0">
                   {isDone ? (
-                    <CheckCircle2 size={18} style={{ color: '#10b981' }} />
+                    <CheckCircle2 size={18} style={{ color: '#1e7a56' }} />
                   ) : (
                     <Circle size={18} style={{ color: '#9ca3af' }} />
                   )}
@@ -165,9 +165,9 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
                   className="opacity-0 group-hover:opacity-100 shrink-0 transition-opacity hover:opacity-70"
                 >
                   {loading === 'del-' + task.id ? (
-                    <Loader2 size={14} className="animate-spin" style={{ color: '#dc2626' }} />
+                    <Loader2 size={14} className="animate-spin" style={{ color: '#b3362a' }} />
                   ) : (
-                    <Trash2 size={14} style={{ color: '#dc2626' }} />
+                    <Trash2 size={14} style={{ color: '#b3362a' }} />
                   )}
                 </button>
               )}
@@ -181,7 +181,7 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
             ref={formRef}
             action={handleAdd}
             className="px-4 py-3 space-y-3"
-            style={{ background: '#eff6ff', borderTop: '1px solid #bfdbfe' }}
+            style={{ background: '#e9f1fb', borderTop: '1px solid #c9dcf3' }}
           >
             <div className="space-y-2">
               <input
@@ -191,7 +191,7 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
                 autoFocus
                 className="w-full text-sm px-3 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400"
                 style={{
-                  border: '1px solid #bfdbfe',
+                  border: '1px solid #c9dcf3',
                   background: 'white',
                   color: 'var(--text-primary)',
                 }}
@@ -204,7 +204,7 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
                   name="due_date"
                   type="date"
                   className="text-sm px-2 py-1 rounded-lg outline-none"
-                  style={{ border: '1px solid #bfdbfe', background: 'white', color: 'var(--text-primary)' }}
+                  style={{ border: '1px solid #c9dcf3', background: 'white', color: 'var(--text-primary)' }}
                 />
               </div>
             </div>
@@ -213,7 +213,7 @@ export function TaskList({ activityId, tasks, currentUser }: TaskListProps) {
                 type="submit"
                 disabled={loading === 'add'}
                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-                style={{ background: '#3b82f6' }}
+                style={{ background: '#2458a6' }}
               >
                 {loading === 'add' ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
                 Simpan

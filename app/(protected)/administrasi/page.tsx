@@ -22,8 +22,8 @@ const CATEGORY_META: {
     category:    'tiket',
     icon:        <Plane size={18} />,
     color:       '#0891b2',
-    bg:          '#f0f9ff',
-    borderColor: '#bae6fd',
+    bg:          '#e9f1fb',
+    borderColor: '#c9dcf3',
   },
   {
     category:    'honor',
@@ -35,23 +35,23 @@ const CATEGORY_META: {
   {
     category:    'hotel',
     icon:        <Hotel size={18} />,
-    color:       '#059669',
-    bg:          '#f0fdf4',
-    borderColor: '#a7f3d0',
+    color:       '#1e7a56',
+    bg:          '#e9f5ef',
+    borderColor: '#bfe3d2',
   },
   {
     category:    'sewa_kendaraan',
     icon:        <Car size={18} />,
-    color:       '#e11d48',
-    bg:          '#fff1f2',
-    borderColor: '#fecdd3',
+    color:       '#b3362a',
+    bg:          '#fbeeec',
+    borderColor: '#efcfca',
   },
   {
     category:    'lainnya',
     icon:        <MoreHorizontal size={18} />,
-    color:       '#d97706',
-    bg:          '#fffbeb',
-    borderColor: '#fde68a',
+    color:       '#a05c0a',
+    bg:          '#fdf3e3',
+    borderColor: '#eed9b4',
   },
 ]
 

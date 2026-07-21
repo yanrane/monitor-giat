@@ -168,8 +168,8 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId, hideSummary = f
                         className="opacity-0 group-hover:opacity-100 transition-opacity hover:opacity-70"
                       >
                         {loading === expense.id
-                          ? <Loader2 size={14} className="animate-spin" style={{ color: '#dc2626' }} />
-                          : <Trash2 size={14} style={{ color: '#dc2626' }} />
+                          ? <Loader2 size={14} className="animate-spin" style={{ color: '#b3362a' }} />
+                          : <Trash2 size={14} style={{ color: '#b3362a' }} />
                         }
                       </button>
                     )}
@@ -205,8 +205,8 @@ export function ExpenseTable({ expenses, isKadiv, currentUserId, hideSummary = f
                           className="mt-1 hover:opacity-70"
                         >
                           {loading === expense.id
-                            ? <Loader2 size={13} className="animate-spin" style={{ color: '#dc2626' }} />
-                            : <Trash2 size={13} style={{ color: '#dc2626' }} />
+                            ? <Loader2 size={13} className="animate-spin" style={{ color: '#b3362a' }} />
+                            : <Trash2 size={13} style={{ color: '#b3362a' }} />
                           }
                         </button>
                       )}

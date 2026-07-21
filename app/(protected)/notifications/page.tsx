@@ -23,8 +23,8 @@ const TYPE_LABELS = {
 const TYPE_COLORS = {
   status_change:     { bg: 'var(--navy-100)', color: 'var(--navy-600)' },
   new_comment:       { bg: 'var(--gold-100)', color: 'var(--gold-600)' },
-  deadline_reminder: { bg: '#fef2f2',         color: '#dc2626'         },
-  briefing:          { bg: '#ecfdf5',         color: '#059669'         },
+  deadline_reminder: { bg: '#fbeeec',         color: '#b3362a'         },
+  briefing:          { bg: '#e9f5ef',         color: '#1e7a56'         },
 }
 
 export default async function NotificationsPage() {

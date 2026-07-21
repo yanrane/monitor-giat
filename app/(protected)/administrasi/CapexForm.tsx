@@ -117,7 +117,7 @@ export function CapexForm() {
           </div>
 
           {error && (
-            <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: '#fef2f2', color: '#dc2626' }}>
+            <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: '#fbeeec', color: '#b3362a' }}>
               {error}
             </p>
           )}

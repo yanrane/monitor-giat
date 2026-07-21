@@ -10,7 +10,7 @@ export function CapexCard({ totalSpent = 0 }: { totalSpent?: number }) {
   const sisa = CAPEX_TOTAL - totalSpent
   const pctUsed = Math.min(100, Math.round((totalSpent / CAPEX_TOTAL) * 100))
   const overBudget = sisa < 0
-  const barColor = overBudget ? '#dc2626' : pctUsed >= 80 ? '#d97706' : '#059669'
+  const barColor = overBudget ? '#b3362a' : pctUsed >= 80 ? '#a05c0a' : '#1e7a56'
 
   return (
     <div

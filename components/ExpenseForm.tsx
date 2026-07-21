@@ -160,7 +160,7 @@ export function ExpenseForm() {
           </div>
 
           {error && (
-            <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: '#fef2f2', color: '#dc2626' }}>
+            <p className="text-xs font-medium px-3 py-2 rounded-lg" style={{ background: '#fbeeec', color: '#b3362a' }}>
               {error}
             </p>
           )}
@@ -170,7 +170,7 @@ export function ExpenseForm() {
               type="submit"
               disabled={loading}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ background: '#3b82f6' }}
+              style={{ background: '#2458a6' }}
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
               Simpan Pengeluaran

@@ -135,7 +135,7 @@ export default function DailyLogPage() {
           ) : !editing && existingLog ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: '#059669' }}>
+                <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: '#1e7a56' }}>
                   <CheckCircle2 size={14} />
                   Log sudah diisi
                 </div>

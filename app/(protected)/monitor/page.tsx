@@ -152,11 +152,11 @@ export default function MonitorPage() {
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Total Anggota</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold" style={{ color: '#059669' }}>{totalFilled}</p>
+            <p className="text-2xl font-bold" style={{ color: '#1e7a56' }}>{totalFilled}</p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Sudah Isi Log</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold" style={{ color: '#dc2626' }}>{totalMembers - totalFilled}</p>
+            <p className="text-2xl font-bold" style={{ color: '#b3362a' }}>{totalMembers - totalFilled}</p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Belum Isi</p>
           </div>
         </div>
@@ -199,7 +199,7 @@ export default function MonitorPage() {
                       <div className="flex items-center gap-3">
                         <div
                           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold"
-                          style={{ background: member.log ? '#d1fae5' : 'var(--gray-100)', color: member.log ? '#065f46' : 'var(--text-muted)' }}
+                          style={{ background: member.log ? '#d1fae5' : 'var(--gray-100)', color: member.log ? '#1e7a56' : 'var(--text-muted)' }}
                         >
                           {getInitials(member.full_name)}
                         </div>
@@ -222,7 +222,7 @@ export default function MonitorPage() {
                               {member.log.location ? `📍 ${member.log.location} — ` : ''}{member.log.content}
                             </p>
                           ) : (
-                            <p className="text-xs mt-0.5" style={{ color: '#dc2626' }}>Belum mengisi log</p>
+                            <p className="text-xs mt-0.5" style={{ color: '#b3362a' }}>Belum mengisi log</p>
                           )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -236,8 +236,8 @@ export default function MonitorPage() {
                             </span>
                           )}
                           {member.log
-                            ? <CheckCircle2 size={16} style={{ color: '#059669' }} />
-                            : <XCircle size={16} style={{ color: '#dc2626' }} />
+                            ? <CheckCircle2 size={16} style={{ color: '#1e7a56' }} />
+                            : <XCircle size={16} style={{ color: '#b3362a' }} />
                           }
                         </div>
                       </div>
@@ -246,16 +246,16 @@ export default function MonitorPage() {
                     {expandedLog === member.id && member.log && (
                       <div
                         className="mx-2 rounded-b-xl px-4 py-3"
-                        style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', borderTop: 'none' }}
+                        style={{ background: '#e9f5ef', border: '1px solid #bfe3d2', borderTop: 'none' }}
                       >
-                        <p className="text-xs font-bold mb-1.5" style={{ color: '#065f46' }}>Log Harian</p>
+                        <p className="text-xs font-bold mb-1.5" style={{ color: '#1e7a56' }}>Log Harian</p>
                         {member.log.location && (
-                          <p className="flex items-center gap-1.5 text-xs font-semibold mb-1.5" style={{ color: '#065f46' }}>
+                          <p className="flex items-center gap-1.5 text-xs font-semibold mb-1.5" style={{ color: '#1e7a56' }}>
                             <MapPin size={12} className="shrink-0" />
                             {member.log.location}
                           </p>
                         )}
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#065f46' }}>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#1e7a56' }}>
                           {member.log.content}
                         </p>
                       </div>

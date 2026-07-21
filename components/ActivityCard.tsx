@@ -43,7 +43,7 @@ export function ActivityCard({ activity }: { activity: Activity }) {
           {(isOverdue || isUrgent) && (
             <div
               className="flex items-center gap-1 mt-2 text-xs font-semibold"
-              style={{ color: isOverdue ? '#991b1b' : '#92400e' }}
+              style={{ color: isOverdue ? '#b3362a' : '#a05c0a' }}
             >
               <AlertCircle size={11} />
               {isOverdue

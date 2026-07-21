@@ -72,7 +72,7 @@ export function DecisionQueue({ activities }: { activities: Activity[] }) {
                 <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                   {act.title}
                 </p>
-                <p className="text-xs mt-0.5 line-clamp-2 font-medium" style={{ color: '#92400e' }}>
+                <p className="text-xs mt-0.5 line-clamp-2 font-medium" style={{ color: '#a05c0a' }}>
                   {decision}
                 </p>
                 <p className="text-xs sm:hidden mt-0.5" style={{ color: 'var(--text-muted)' }}>

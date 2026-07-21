@@ -36,10 +36,10 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
   }
 
   const SECTIONS = [
-    { key: 'berjalan',    dot: '#d97706', label: 'Sedang Berjalan' },
-    { key: 'belum_mulai', dot: '#3b82f6', label: 'Belum Mulai'     },
-    { key: 'ditunda',     dot: '#dc2626', label: 'Ditunda'          },
-    { key: 'selesai',     dot: '#059669', label: 'Selesai'          },
+    { key: 'berjalan',    dot: '#a05c0a', label: 'Sedang Berjalan' },
+    { key: 'belum_mulai', dot: '#2458a6', label: 'Belum Mulai'     },
+    { key: 'ditunda',     dot: '#b3362a', label: 'Ditunda'          },
+    { key: 'selesai',     dot: '#1e7a56', label: 'Selesai'          },
   ] as const
 
   return (

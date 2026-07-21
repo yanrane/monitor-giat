@@ -1,10 +1,10 @@
 import { type ActivityStatus, STATUS_LABELS } from '@/lib/types'
 
 const CONFIG: Record<ActivityStatus, { dot: string; cls: string }> = {
-  belum_mulai: { dot: '#3b82f6', cls: 'status-belum_mulai' },
-  berjalan:    { dot: '#d97706', cls: 'status-berjalan' },
-  selesai:     { dot: '#059669', cls: 'status-selesai' },
-  ditunda:     { dot: '#dc2626', cls: 'status-ditunda' },
+  belum_mulai: { dot: '#2458a6', cls: 'status-belum_mulai' },
+  berjalan:    { dot: '#a05c0a', cls: 'status-berjalan' },
+  selesai:     { dot: '#1e7a56', cls: 'status-selesai' },
+  ditunda:     { dot: '#b3362a', cls: 'status-ditunda' },
 }
 
 export function StatusBadge({ status }: { status: ActivityStatus }) {

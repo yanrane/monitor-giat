@@ -167,12 +167,12 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           {act.output_notes ? (
             <div
               className="rounded-xl p-4"
-              style={{ background: '#ecfdf5', border: '1px solid #a7f3d0' }}
+              style={{ background: '#e9f5ef', border: '1px solid #bfe3d2' }}
             >
-              <p className="text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: '#065f46' }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: '#1e7a56' }}>
                 <FileText size={12} /> Output / Hasil
               </p>
-              <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#065f46' }}>
+              <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#1e7a56' }}>
                 {act.output_notes}
               </p>
             </div>

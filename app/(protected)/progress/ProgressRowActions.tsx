@@ -15,7 +15,7 @@ export function ProgressToggle({ itemIds, status, canToggle }: ProgressTogglePro
 
   if (!canToggle) {
     return status === 'done'
-      ? <CheckCircle2 size={18} style={{ color: '#10b981' }} className="shrink-0" />
+      ? <CheckCircle2 size={18} style={{ color: '#1e7a56' }} className="shrink-0" />
       : <div className="w-[18px] h-[18px] rounded-full shrink-0" style={{ border: '1.5px solid #d1d5db' }} />
   }
 
@@ -25,12 +25,12 @@ export function ProgressToggle({ itemIds, status, canToggle }: ProgressTogglePro
     setLoading(false)
   }
 
-  if (loading) return <Loader2 size={18} className="animate-spin shrink-0" style={{ color: '#3b82f6' }} />
+  if (loading) return <Loader2 size={18} className="animate-spin shrink-0" style={{ color: '#2458a6' }} />
 
   return (
     <button onClick={handleToggle} className="shrink-0 transition-opacity hover:opacity-70" title={status === 'done' ? 'Tandai belum selesai' : 'Tandai selesai'}>
       {status === 'done'
-        ? <CheckCircle2 size={18} style={{ color: '#10b981' }} />
+        ? <CheckCircle2 size={18} style={{ color: '#1e7a56' }} />
         : <Circle size={18} style={{ color: '#9ca3af' }} />}
     </button>
   )

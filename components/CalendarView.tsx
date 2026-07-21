@@ -20,10 +20,10 @@ const localizer = dateFnsLocalizer({
 
 // Warna mengikuti kartu ringkasan Monitor Progress
 const STATUS_COLORS: Record<string, string> = {
-  berjalan: '#2563eb',
-  melewati_target: '#dc2626',
-  tepat_waktu: '#059669',
-  terlambat: '#d97706',
+  berjalan: '#2458a6',
+  melewati_target: '#b3362a',
+  tepat_waktu: '#1e7a56',
+  terlambat: '#a05c0a',
 }
 
 const STATUS_LABELS: Record<string, string> = {

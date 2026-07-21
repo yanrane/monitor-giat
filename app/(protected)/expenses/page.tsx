@@ -58,9 +58,9 @@ export default async function ExpensesPage() {
           <div className="flex items-center gap-2.5 mb-1">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}
+              style={{ background: '#e9f1fb', border: '1px solid #c9dcf3' }}
             >
-              <Receipt size={16} style={{ color: '#0284c7' }} />
+              <Receipt size={16} style={{ color: '#2458a6' }} />
             </div>
             <h1 className="font-serif" style={{ fontSize: '22px', color: 'var(--navy-900)' }}>
               Laporan Pengeluaran
