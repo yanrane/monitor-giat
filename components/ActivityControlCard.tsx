@@ -4,8 +4,8 @@ import { formatDate, formatDateTime, daysSinceWIB, staleLevel } from '@/lib/util
 import { AlertOctagon, ArrowRightCircle, Gavel, History, ShieldAlert } from 'lucide-react'
 
 const STALE_STYLES = {
-  warning:  { background: '#fffbeb', color: '#92400e', border: '#fde68a' },
-  critical: { background: '#fef2f2', color: '#991b1b', border: '#fecaca' },
+  warning:  { background: 'var(--warn-bg)', color: 'var(--warn)', border: '#eed9b4' },
+  critical: { background: 'var(--bad-bg)',  color: 'var(--bad)',  border: '#efcfca' },
 }
 
 export function ActivityControlCard({ activity }: { activity: Activity }) {
@@ -20,15 +20,17 @@ export function ActivityControlCard({ activity }: { activity: Activity }) {
   return (
     <div
       className="bg-white rounded-2xl overflow-hidden"
-      style={{ border: '1px solid var(--cream-border)', boxShadow: '0 2px 8px rgba(11,25,41,0.06)' }}
+      style={{ border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(11,25,41,0.05)' }}
     >
       <div
-        className="flex items-center justify-between px-5 py-3"
-        style={{ background: 'var(--surface)', borderBottom: '1px solid var(--cream-border)' }}
+        className="flex items-center justify-between gap-2 flex-wrap px-4 py-3"
+        style={{ borderBottom: '1px solid var(--separator)' }}
       >
         <div className="flex items-center gap-2">
-          <ShieldAlert size={14} style={{ color: 'var(--navy-700)' }} />
-          <span className="text-sm font-bold" style={{ color: 'var(--navy-900)' }}>
+          <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'var(--navy-50)' }}>
+            <ShieldAlert size={13} style={{ color: 'var(--navy-600)' }} />
+          </span>
+          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             Kendali Pekerjaan
           </span>
         </div>
@@ -81,11 +83,11 @@ export function ActivityControlCard({ activity }: { activity: Activity }) {
 
         {/* Decision needed — paling menonjol */}
         {activity.decision_needed && (
-          <div className="rounded-xl p-3.5" style={{ background: '#fffbeb', border: '1px solid #fde68a' }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: '#92400e' }}>
+          <div className="rounded-xl p-3.5" style={{ background: 'var(--warn-bg)', borderLeft: '3px solid var(--warn)' }}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--warn)' }}>
               <Gavel size={12} /> Butuh Keputusan Kadiv
             </p>
-            <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#92400e' }}>
+            <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-primary)' }}>
               {activity.decision_needed}
             </p>
           </div>
@@ -93,11 +95,11 @@ export function ActivityControlCard({ activity }: { activity: Activity }) {
 
         {/* Blocker */}
         {activity.blocker && (
-          <div className="rounded-xl p-3.5" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: '#991b1b' }}>
+          <div className="rounded-xl p-3.5" style={{ background: 'var(--bad-bg)', borderLeft: '3px solid var(--bad)' }}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--bad)' }}>
               <AlertOctagon size={12} /> Blocker
             </p>
-            <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#991b1b' }}>
+            <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-primary)' }}>
               {activity.blocker}
             </p>
           </div>
@@ -105,15 +107,15 @@ export function ActivityControlCard({ activity }: { activity: Activity }) {
 
         {/* Next action */}
         {activity.next_action && (
-          <div className="rounded-xl p-3.5" style={{ background: 'var(--blue-50)', border: '1px solid var(--blue-light)' }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--blue-dark)' }}>
+          <div className="rounded-xl p-3.5" style={{ background: 'var(--run-bg)', borderLeft: '3px solid var(--run)' }}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--run)' }}>
               <ArrowRightCircle size={12} /> Next Action
             </p>
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--navy-900)' }}>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
               {activity.next_action}
             </p>
             {activity.next_action_due_date && (
-              <p className="text-xs mt-1 font-semibold" style={{ color: 'var(--blue-dark)' }}>
+              <p className="text-xs mt-1 font-semibold tabular-nums" style={{ color: 'var(--run)' }}>
                 Target: {formatDate(activity.next_action_due_date)}
               </p>
             )}
@@ -122,7 +124,7 @@ export function ActivityControlCard({ activity }: { activity: Activity }) {
 
         {/* Empty state */}
         {!hasControlData && (
-          <p className="text-sm rounded-xl p-3.5" style={{ background: 'var(--cream-dark)', color: 'var(--text-muted)' }}>
+          <p className="text-sm rounded-xl p-3.5" style={{ background: 'var(--surface-2)', border: '1px dashed var(--border)', color: 'var(--text-muted)' }}>
             {isOpen
               ? 'Data kendali belum diisi. Klik Edit lalu lengkapi status kendali dan next action agar Kadiv tahu posisi pekerjaan ini tanpa harus bertanya.'
               : 'Tidak ada data kendali untuk kegiatan yang sudah ditutup.'}

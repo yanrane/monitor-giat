@@ -35,13 +35,13 @@ function groupStatus(group: Group, today: string) {
   const pending = group.members.some((m) => m.status !== 'done')
   if (pending) {
     return group.target_date < today
-      ? { label: 'Melewati Target', color: '#dc2626', bg: '#fef2f2' }
-      : { label: 'Berjalan', color: '#2563eb', bg: '#eff6ff' }
+      ? { label: 'Melewati Target', color: 'var(--bad)', bg: 'var(--bad-bg)' }
+      : { label: 'Berjalan', color: 'var(--run)', bg: 'var(--run-bg)' }
   }
   const late = group.members.some((m) => doneDateStr(m, today) > group.target_date)
   return late
-    ? { label: 'Selesai Terlambat', color: '#d97706', bg: '#fffbeb' }
-    : { label: 'Tepat Waktu', color: '#059669', bg: '#f0fdf4' }
+    ? { label: 'Selesai Terlambat', color: 'var(--warn)', bg: 'var(--warn-bg)' }
+    : { label: 'Tepat Waktu', color: 'var(--ok)', bg: 'var(--ok-bg)' }
 }
 
 // Pesan siap-kirim WhatsApp untuk PIC. Kalau nomor WA PIC terisi
@@ -68,16 +68,18 @@ function StatCard({ value, label, color, bg, icon, href, active }: {
       href={href}
       className="rounded-2xl p-4 flex items-start justify-between transition-shadow hover:shadow-md"
       style={{
-        background: bg,
-        border: `1px solid ${active ? color : 'var(--cream-border)'}`,
-        boxShadow: active ? `0 0 0 2px ${color}40` : '0 1px 4px rgba(11,25,41,0.05)',
+        background: active ? bg : 'var(--surface)',
+        border: `1px solid ${active ? color : 'var(--border)'}`,
+        boxShadow: active ? `0 0 0 2px ${color}30` : '0 1px 4px rgba(11,25,41,0.05)',
       }}
     >
       <div>
-        <p className="text-2xl font-bold leading-none" style={{ color }}>{value}</p>
+        <p className="text-2xl font-bold leading-none tabular-nums" style={{ color }}>{value}</p>
         <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>{label}</p>
       </div>
-      <span style={{ color }}>{icon}</span>
+      <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: bg, color }}>
+        {icon}
+      </span>
     </Link>
   )
 }
@@ -126,7 +128,7 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
             <div
               key={ids[0]}
               className="px-4 py-3 flex flex-col gap-2 sm:grid sm:items-center sm:gap-3"
-              style={{ gridTemplateColumns: gridCols, background: allDone ? '#f9fafb' : 'white' }}
+              style={{ gridTemplateColumns: gridCols, background: allDone ? 'var(--surface-2)' : 'white' }}
             >
               <div className="flex items-center gap-2.5 sm:contents">
                 <ProgressToggle
@@ -137,7 +139,7 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
                 <p
                   className="text-sm min-w-0 flex-1 break-words"
                   style={{
-                    color: allDone ? '#9ca3af' : st.label === 'Melewati Target' ? '#991b1b' : 'var(--text-primary)',
+                    color: allDone ? 'var(--text-tertiary)' : st.label === 'Melewati Target' ? 'var(--bad)' : 'var(--text-primary)',
                     textDecoration: allDone ? 'line-through' : 'none',
                   }}
                 >
@@ -176,7 +178,7 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
                 <div className="hidden sm:block">
                   <span
                     className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full"
-                    style={{ color: st.color, background: st.bg, border: `1px solid ${st.color}25` }}
+                    style={{ color: st.color, background: st.bg, border: '1px solid color-mix(in srgb, currentColor 25%, transparent)' }}
                   >
                     {st.label}
                   </span>
@@ -319,13 +321,13 @@ export default async function ProgressPage({ searchParams }: {
 
       {/* Summary stats — klik untuk filter, klik lagi untuk semua */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard value={running.length}  label="Berjalan"          color="#2563eb" bg="#eff6ff" icon={<Clock size={16} />}
+        <StatCard value={running.length}  label="Berjalan"          color="var(--run)" bg="var(--run-bg)" icon={<Clock size={15} />}
           href={filter === 'berjalan' ? '/progress' : '/progress?filter=berjalan'} active={filter === 'berjalan'} />
-        <StatCard value={overdue.length}  label="Melewati Target"   color="#dc2626" bg="#fef2f2" icon={<AlertTriangle size={16} />}
+        <StatCard value={overdue.length}  label="Melewati Target"   color="var(--bad)" bg="var(--bad-bg)" icon={<AlertTriangle size={15} />}
           href={filter === 'melewati' ? '/progress' : '/progress?filter=melewati'} active={filter === 'melewati'} />
-        <StatCard value={onTime.length}   label="Selesai Tepat Waktu" color="#059669" bg="#f0fdf4" icon={<CheckCircle2 size={16} />}
+        <StatCard value={onTime.length}   label="Selesai Tepat Waktu" color="var(--ok)" bg="var(--ok-bg)" icon={<CheckCircle2 size={15} />}
           href={filter === 'tepat' ? '/progress' : '/progress?filter=tepat'} active={filter === 'tepat'} />
-        <StatCard value={lateDone.length} label="Selesai Terlambat" color="#d97706" bg="#fffbeb" icon={<TrendingUp size={16} />}
+        <StatCard value={lateDone.length} label="Selesai Terlambat" color="var(--warn)" bg="var(--warn-bg)" icon={<TrendingUp size={15} />}
           href={filter === 'terlambat' ? '/progress' : '/progress?filter=terlambat'} active={filter === 'terlambat'} />
       </div>
 

@@ -29,15 +29,15 @@ export function CapexCard({ totalSpent = 0 }: { totalSpent?: number }) {
         <div className="flex items-center gap-6 flex-wrap">
           <div>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Pagu Anggaran CAPEX</p>
-            <p className="text-base font-bold">{formatRupiah(CAPEX_TOTAL)}</p>
+            <p className="text-base font-bold tabular-nums">{formatRupiah(CAPEX_TOTAL)}</p>
           </div>
           <div>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Total Pengeluaran ({pctUsed}%)</p>
-            <p className="text-base font-bold">− {formatRupiah(totalSpent)}</p>
+            <p className="text-base font-bold tabular-nums">− {formatRupiah(totalSpent)}</p>
           </div>
           <div>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>Sisa Anggaran CAPEX</p>
-            <p className="text-lg font-bold" style={{ color: overBudget ? '#fca5a5' : '#6ee7b7' }}>
+            <p className="text-lg font-bold tabular-nums" style={{ color: overBudget ? '#fca5a5' : '#6ee7b7' }}>
               {overBudget ? `− ${formatRupiah(Math.abs(sisa))}` : formatRupiah(sisa)}
             </p>
           </div>
