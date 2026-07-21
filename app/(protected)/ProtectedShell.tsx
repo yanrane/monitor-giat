@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { NotificationBell } from '@/components/NotificationBell'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Scale, LayoutDashboard, Building2, Calendar, Bell, Shield, LogOut, ClipboardList, Users, Receipt, CheckSquare, FolderOpen } from 'lucide-react'
+import { LayoutDashboard, Building2, Calendar, Bell, Shield, LogOut, ClipboardList, Users, Receipt, CheckSquare, FolderOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ProtectedShellProps {
@@ -69,12 +69,8 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: 'var(--brass)' }}
-            >
-              <Scale size={15} style={{ color: 'var(--navy-950)' }} />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icon-192.png" alt="Logo PT Timah" className="w-8 h-8 rounded-lg shrink-0" />
             <div className="hidden sm:block">
               <p className="text-white font-semibold text-sm leading-none tracking-tight">Monitor Kegiatan</p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--navy-300)' }}>Divisi Hukum PT Timah</p>

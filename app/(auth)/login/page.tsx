@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Scale, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { type Department } from '@/lib/types'
 
 export default function LoginPage() {
@@ -129,9 +129,9 @@ export default function LoginPage() {
       >
         <div>
           <div className="flex items-center gap-3 mb-14">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--blue)' }}>
-              <Scale size={20} className="text-white" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icon-192.png" alt="Logo PT Timah" className="w-10 h-10 rounded-xl" />
+
             <div>
               <p className="text-white font-semibold text-sm leading-none tracking-tight">PT Timah Tbk</p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--navy-300)' }}>Divisi Hukum</p>
@@ -163,12 +163,8 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         {/* Mobile logo — lebih besar */}
         <div className="lg:hidden flex flex-col items-center gap-3 mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: 'var(--navy-900)' }}
-          >
-            <Scale size={32} className="text-white" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon-192.png" alt="Logo PT Timah" className="w-16 h-16 rounded-2xl" style={{ boxShadow: '0 4px 14px rgba(11,25,41,0.25)' }} />
           <div className="text-center">
             <p className="font-semibold text-lg leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>
               PT Timah Tbk
