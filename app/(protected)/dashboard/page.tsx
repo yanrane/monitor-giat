@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DepartmentBoard } from '@/components/DepartmentBoard'
 import { DecisionQueue } from '@/components/DecisionQueue'
 import { StaleActivities, type StaleActivity } from '@/components/StaleActivities'
+import { CompletionTrend } from '@/components/CompletionTrend'
 import { type Activity, type Department, type Task, type ProgressItem, DEPT_BG_COLORS } from '@/lib/types'
 import { AlertTriangle, CalendarClock } from 'lucide-react'
 import { formatDate, daysSinceWIB, staleLevel, wibDateStr } from '@/lib/utils'
@@ -308,6 +309,9 @@ export default async function DashboardPage() {
           )}
         </div>
       )}
+
+      {/* ── Tren penyelesaian ─────────────────────────────── */}
+      <CompletionTrend activities={acts} />
 
       {/* ── Decision Queue Kadiv ──────────────────────────── */}
       <DecisionQueue activities={decisionQueue} />
