@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckCircle2, Circle, Loader2, Trash2 } from 'lucide-react'
 import { toggleProgressItem, deleteProgressItem } from './actions'
 
@@ -11,7 +11,10 @@ interface ProgressToggleProps {
 }
 
 export function ProgressToggle({ itemIds, status, canToggle }: ProgressToggleProps) {
-  const [loading, setLoading] = useState(false)
+  // Optimistis: ikon langsung berubah saat diklik; server menyusul, revert kalau gagal
+  const [optimistic, setOptimistic] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  useEffect(() => { setOptimistic(null) }, [status])
 
   if (!canToggle) {
     return status === 'done'
@@ -19,17 +22,28 @@ export function ProgressToggle({ itemIds, status, canToggle }: ProgressTogglePro
       : <div className="w-[18px] h-[18px] rounded-full shrink-0" style={{ border: '1.5px solid #d1d5db' }} />
   }
 
+  const shown = optimistic ?? status
+
   async function handleToggle() {
-    setLoading(true)
-    await toggleProgressItem(itemIds, status)
-    setLoading(false)
+    if (saving) return
+    setOptimistic(status === 'done' ? 'pending' : 'done')
+    setSaving(true)
+    try {
+      await toggleProgressItem(itemIds, status)
+    } catch {
+      setOptimistic(null)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  if (loading) return <Loader2 size={18} className="animate-spin shrink-0" style={{ color: '#2458a6' }} />
-
   return (
-    <button onClick={handleToggle} className="shrink-0 transition-opacity hover:opacity-70" title={status === 'done' ? 'Tandai belum selesai' : 'Tandai selesai'}>
-      {status === 'done'
+    <button
+      onClick={handleToggle}
+      className={`shrink-0 transition-all active:scale-90 hover:opacity-70 ${saving ? 'animate-pulse' : ''}`}
+      title={shown === 'done' ? 'Tandai belum selesai' : 'Tandai selesai'}
+    >
+      {shown === 'done'
         ? <CheckCircle2 size={18} style={{ color: '#1e7a56' }} />
         : <Circle size={18} style={{ color: '#9ca3af' }} />}
     </button>
