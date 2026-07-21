@@ -59,6 +59,26 @@ export interface Activity {
   tasks?: Pick<Task, 'id' | 'status'>[]
 }
 
+export type DecisionAction =
+  | 'approve_continue'
+  | 'beri_arahan'
+  | 'minta_klarifikasi'
+  | 'eskalasi_kembalikan'
+
+export interface ActivityDecision {
+  id: string
+  activity_id: string
+  action: DecisionAction
+  instruction: string
+  decision_needed_snapshot: string | null
+  resulting_control_status: ControlStatus
+  next_action: string | null
+  next_action_due_date: string | null
+  decided_by: string
+  created_at: string
+  decider?: Pick<Profile, 'full_name'>
+}
+
 export interface DailyLog {
   id: string
   user_id: string
@@ -193,6 +213,30 @@ export const CONTROL_STATUS_COLORS: Record<ControlStatus, string> = {
   needs_kadiv_decision: 'bg-purple-100 text-purple-800 border-purple-200',
   blocked: 'bg-red-100 text-red-800 border-red-200',
   escalated: 'bg-red-100 text-red-800 border-red-200',
+}
+
+export const DECISION_ACTION_LABELS: Record<DecisionAction, string> = {
+  approve_continue: 'Approve & Continue',
+  beri_arahan: 'Beri Arahan',
+  minta_klarifikasi: 'Minta Klarifikasi',
+  eskalasi_kembalikan: 'Eskalasi / Kembalikan ke PIC',
+}
+
+// Status kendali hasil keputusan — needs_kadiv_decision dan escalated
+// sengaja tidak tersedia agar kegiatan keluar dari antrean keputusan
+// dashboard setelah diputus (keduanya masuk predikat antrean Kadiv)
+export const DECISION_RESULT_STATUSES: ControlStatus[] = [
+  'on_track',
+  'waiting_internal',
+  'waiting_external',
+  'blocked',
+]
+
+export const DECISION_DEFAULT_STATUS: Record<DecisionAction, ControlStatus> = {
+  approve_continue: 'on_track',
+  beri_arahan: 'on_track',
+  minta_klarifikasi: 'waiting_internal',
+  eskalasi_kembalikan: 'waiting_internal',
 }
 
 export const DEPT_COLORS: Record<string, string> = {

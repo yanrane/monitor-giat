@@ -4,11 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import { StatusBadge } from '@/components/StatusBadge'
 import { PriorityBadge } from '@/components/PriorityBadge'
 import { ActivityControlCard } from '@/components/ActivityControlCard'
+import { KadivDecisionPanel } from '@/components/KadivDecisionPanel'
+import { DecisionHistory } from '@/components/DecisionHistory'
 import { CommentThread } from '@/components/CommentThread'
 import { FileUploader } from '@/components/FileUploader'
 import { TaskList } from '@/components/TaskList'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { type Activity, type Comment, type Attachment, type Profile, type Task, DEPT_BG_COLORS } from '@/lib/types'
+import { type Activity, type ActivityDecision, type Comment, type Attachment, type Profile, type Task, DEPT_BG_COLORS } from '@/lib/types'
 import { formatDate, formatDateTime } from '@/lib/utils'
 import { ArrowLeft, Pencil, CalendarDays, FileText, User, UserCheck } from 'lucide-react'
 import { DeleteActivityButton } from './DeleteActivityButton'
@@ -25,12 +27,14 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
     { data: attachments },
     { data: profile },
     { data: tasks },
+    { data: decisions },
   ] = await Promise.all([
     supabase.from('activities').select('*, departments(name), profiles!created_by(full_name), pic:profiles!pic_id(full_name), last_updater:profiles!last_substantive_update_by(full_name)').eq('id', id).single(),
     supabase.from('comments').select('*, profiles(full_name, role)').eq('activity_id', id).order('created_at'),
     supabase.from('attachments').select('*, profiles(full_name)').eq('activity_id', id).order('created_at'),
     supabase.from('profiles').select('*, departments(name)').eq('id', user.id).single(),
     supabase.from('tasks').select('*, profiles(full_name)').eq('activity_id', id).order('created_at'),
+    supabase.from('activity_decisions').select('*, decider:profiles!decided_by(full_name)').eq('activity_id', id).order('created_at', { ascending: false }),
   ])
 
   if (!activity) notFound()
@@ -42,6 +46,11 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                    || (currentUser.role === 'staff' && act.created_by === user.id)
   const deptName    = act.departments?.name ?? ''
   const accent      = DEPT_BG_COLORS[deptName] ?? 'var(--navy-600)'
+  const needsKadivDecision =
+    currentUser.role === 'kadiv' &&
+    (!!act.decision_needed ||
+      act.control_status === 'needs_kadiv_decision' ||
+      act.control_status === 'escalated')
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -108,8 +117,14 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         </div>
       </div>
 
+      {/* Panel keputusan — Kadiv only */}
+      {needsKadivDecision && <KadivDecisionPanel activity={act} />}
+
       {/* Kendali Pekerjaan */}
       <ActivityControlCard activity={act} />
+
+      {/* Riwayat keputusan Kadiv */}
+      <DecisionHistory decisions={(decisions as ActivityDecision[]) ?? []} />
 
       {/* Tabs */}
       <Tabs defaultValue="tasks">
