@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { type Activity, DEPT_BG_COLORS } from '@/lib/types'
-import { History, ArrowRight } from 'lucide-react'
+import { History, ArrowRight, ChevronDown } from 'lucide-react'
 
 export interface StaleActivity {
   activity: Activity
@@ -19,12 +19,12 @@ export function StaleActivities({ items }: { items: StaleActivity[] }) {
   const critical = items.filter((i) => i.level === 'critical').length
 
   return (
-    <section
-      className="rounded-2xl overflow-hidden"
+    <details
+      className="group rounded-2xl overflow-hidden"
       style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(11,25,41,0.05)' }}
     >
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid var(--separator)' }}>
+      {/* Header — dropdown, default terlipat supaya dashboard rapi */}
+      <summary className="flex flex-wrap items-center gap-2 px-4 py-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden transition-colors hover:bg-[--surface-2]">
         <span className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'var(--warn-bg)' }}>
           <History size={13} style={{ color: 'var(--warn)' }} />
         </span>
@@ -45,13 +45,21 @@ export function StaleActivities({ items }: { items: StaleActivity[] }) {
             {critical} kritis · 14+ hari
           </span>
         )}
-        <span className="ml-auto hidden sm:block text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          diurutkan dari yang paling lama
+        <span className="ml-auto flex items-center gap-2">
+          <span className="hidden sm:block text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            <span className="group-open:hidden">klik untuk membuka</span>
+            <span className="hidden group-open:inline">diurutkan dari yang paling lama</span>
+          </span>
+          <ChevronDown
+            size={15}
+            className="shrink-0 transition-transform group-open:rotate-180"
+            style={{ color: 'var(--text-muted)' }}
+          />
         </span>
-      </div>
+      </summary>
 
       {/* Rows */}
-      <div className="divide-y" style={{ borderColor: 'var(--separator)' }}>
+      <div className="divide-y" style={{ borderTop: '1px solid var(--separator)', borderColor: 'var(--separator)' }}>
         {items.map(({ activity: act, days, level }) => {
           const deptName = act.departments?.name ?? ''
           const accent   = DEPT_BG_COLORS[deptName] ?? '#7a8fa8'
@@ -99,6 +107,6 @@ export function StaleActivities({ items }: { items: StaleActivity[] }) {
           )
         })}
       </div>
-    </section>
+    </details>
   )
 }
