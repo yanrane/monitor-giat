@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { NotificationBell } from '@/components/NotificationBell'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Building2, Calendar, Bell, Shield, LogOut, ClipboardList, Users, Receipt, CheckSquare, FolderOpen } from 'lucide-react'
+import { LayoutDashboard, Building2, Calendar, Bell, Shield, LogOut, ClipboardList, Users, Receipt, CheckSquare, FolderOpen, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ProtectedShellProps {
@@ -45,6 +45,7 @@ export function ProtectedShell({ profile, children }: ProtectedShellProps) {
     { href: '/calendar', icon: Calendar, label: 'Kalender' },
     { href: '/expenses', icon: Receipt, label: 'Pengeluaran' },
     { href: '/notifications', icon: Bell, label: 'Notifikasi' },
+    { href: '/panduan', icon: BookOpen, label: 'Panduan' },
     ...(isKadiv ? [{ href: '/admin', icon: Shield, label: 'Kelola Akun' }] : []),
   ]
 
