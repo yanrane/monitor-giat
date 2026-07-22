@@ -85,9 +85,11 @@ export interface DailyLog {
   log_date: string
   content: string
   location: string | null
+  activity_id: string | null
   created_at: string
   updated_at: string
   profiles?: Profile
+  activities?: { id: string; title: string } | null
 }
 
 export interface Comment {

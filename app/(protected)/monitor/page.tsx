@@ -20,7 +20,7 @@ function getInitials(name: string) {
   return name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
 }
 
-type MemberWithLog = Profile & { log: DailyLog | null; activityCount: number }
+type MemberWithLog = Profile & { logs: DailyLog[]; activityCount: number }
 type GroupedByDept = { dept: Department | null; members: MemberWithLog[] }[]
 
 export default function MonitorPage() {
@@ -49,13 +49,17 @@ export default function MonitorPage() {
 
     const [{ data: members }, { data: logs }, { data: activities }] = await Promise.all([
       membersQuery,
-      supabase.from('daily_logs').select('*').eq('log_date', selectedDate),
+      supabase.from('daily_logs').select('*, activities(id, title)').eq('log_date', selectedDate).order('created_at'),
       supabase.from('activities').select('created_by, pic_id, status'),
     ])
 
     const memberList = members as (Profile & { departments: Department })[] ?? []
-    const logMap = new Map<string, DailyLog>()
-    for (const log of (logs ?? []) as DailyLog[]) logMap.set(log.user_id, log)
+    // Satu anggota kini bisa punya beberapa catatan per hari (per kegiatan)
+    const logMap = new Map<string, DailyLog[]>()
+    for (const log of (logs ?? []) as DailyLog[]) {
+      if (!logMap.has(log.user_id)) logMap.set(log.user_id, [])
+      logMap.get(log.user_id)!.push(log)
+    }
 
     const activityCountMap = new Map<string, number>()
     for (const a of activities ?? []) {
@@ -65,7 +69,7 @@ export default function MonitorPage() {
 
     const withLogs: MemberWithLog[] = memberList.map((m) => ({
       ...m,
-      log: logMap.get(m.id) ?? null,
+      logs: logMap.get(m.id) ?? [],
       activityCount: activityCountMap.get(m.id) ?? 0,
     }))
 
@@ -104,7 +108,7 @@ export default function MonitorPage() {
 
   const isToday = selectedDate === today
   const totalMembers = groups.reduce((s, g) => s + g.members.length, 0)
-  const totalFilled = groups.reduce((s, g) => s + g.members.filter((m) => m.log).length, 0)
+  const totalFilled = groups.reduce((s, g) => s + g.members.filter((m) => m.logs.length > 0).length, 0)
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -180,7 +184,7 @@ export default function MonitorPage() {
                     {group.dept.name}
                   </p>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--navy-100)', color: 'var(--navy-600)' }}>
-                    {group.members.filter((m) => m.log).length}/{group.members.length}
+                    {group.members.filter((m) => m.logs.length > 0).length}/{group.members.length}
                   </span>
                   <div className="h-px flex-1" style={{ background: 'var(--cream-border)' }} />
                 </div>
@@ -199,7 +203,7 @@ export default function MonitorPage() {
                       <div className="flex items-center gap-3">
                         <div
                           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold"
-                          style={{ background: member.log ? '#d1fae5' : 'var(--gray-100)', color: member.log ? '#1e7a56' : 'var(--text-muted)' }}
+                          style={{ background: member.logs.length > 0 ? '#d1fae5' : 'var(--gray-100)', color: member.logs.length > 0 ? '#1e7a56' : 'var(--text-muted)' }}
                         >
                           {getInitials(member.full_name)}
                         </div>
@@ -217,9 +221,12 @@ export default function MonitorPage() {
                               {member.role === 'dept_head' ? 'Dept Head' : 'Staf'}
                             </span>
                           </div>
-                          {member.log ? (
+                          {member.logs.length > 0 ? (
                             <p className="text-xs mt-0.5 line-clamp-1" style={{ color: 'var(--text-muted)' }}>
-                              {member.log.location ? `📍 ${member.log.location} — ` : ''}{member.log.content}
+                              {member.logs[0].location ? `📍 ${member.logs[0].location} — ` : ''}
+                              {member.logs[0].activities?.title ? `${member.logs[0].activities.title}: ` : ''}
+                              {member.logs[0].content}
+                              {member.logs.length > 1 ? ` (+${member.logs.length - 1} catatan)` : ''}
                             </p>
                           ) : (
                             <p className="text-xs mt-0.5" style={{ color: '#b3362a' }}>Belum mengisi log</p>
@@ -235,7 +242,7 @@ export default function MonitorPage() {
                               {member.activityCount}
                             </span>
                           )}
-                          {member.log
+                          {member.logs.length > 0
                             ? <CheckCircle2 size={16} style={{ color: '#1e7a56' }} />
                             : <XCircle size={16} style={{ color: '#b3362a' }} />
                           }
@@ -243,21 +250,30 @@ export default function MonitorPage() {
                       </div>
                     </button>
 
-                    {expandedLog === member.id && member.log && (
+                    {expandedLog === member.id && member.logs.length > 0 && (
                       <div
-                        className="mx-2 rounded-b-xl px-4 py-3"
+                        className="mx-2 rounded-b-xl px-4 py-3 space-y-3"
                         style={{ background: '#e9f5ef', border: '1px solid #bfe3d2', borderTop: 'none' }}
                       >
-                        <p className="text-xs font-bold mb-1.5" style={{ color: '#1e7a56' }}>Log Harian</p>
-                        {member.log.location && (
-                          <p className="flex items-center gap-1.5 text-xs font-semibold mb-1.5" style={{ color: '#1e7a56' }}>
-                            <MapPin size={12} className="shrink-0" />
-                            {member.log.location}
-                          </p>
-                        )}
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#1e7a56' }}>
-                          {member.log.content}
+                        <p className="text-xs font-bold" style={{ color: '#1e7a56' }}>
+                          Log Harian ({member.logs.length} catatan)
                         </p>
+                        {member.logs.map((log) => (
+                          <div key={log.id} style={{ borderLeft: '2px solid #bfe3d2', paddingLeft: '10px' }}>
+                            <p className="text-xs font-bold" style={{ color: '#1e7a56' }}>
+                              {log.activities?.title ?? 'Umum'}
+                            </p>
+                            {log.location && (
+                              <p className="flex items-center gap-1.5 text-xs font-semibold mt-0.5" style={{ color: '#1e7a56' }}>
+                                <MapPin size={12} className="shrink-0" />
+                                {log.location}
+                              </p>
+                            )}
+                            <p className="text-sm whitespace-pre-wrap leading-relaxed mt-0.5" style={{ color: '#1e7a56' }}>
+                              {log.content}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

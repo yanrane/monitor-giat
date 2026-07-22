@@ -10,9 +10,9 @@ import { CommentThread } from '@/components/CommentThread'
 import { FileUploader } from '@/components/FileUploader'
 import { TaskList } from '@/components/TaskList'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { type Activity, type ActivityDecision, type Comment, type Attachment, type Profile, type Task, DEPT_BG_COLORS } from '@/lib/types'
+import { type Activity, type ActivityDecision, type Comment, type Attachment, type DailyLog, type Profile, type Task, DEPT_BG_COLORS } from '@/lib/types'
 import { formatDate, formatDateTime } from '@/lib/utils'
-import { ArrowLeft, Pencil, CalendarDays, FileText, User, UserCheck } from 'lucide-react'
+import { ArrowLeft, Pencil, CalendarDays, FileText, MapPin, User, UserCheck } from 'lucide-react'
 import { DeleteActivityButton } from './DeleteActivityButton'
 
 export default async function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +28,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
     { data: profile },
     { data: tasks },
     { data: decisions },
+    { data: dailyLogs },
   ] = await Promise.all([
     supabase.from('activities').select('*, departments(name), profiles!created_by(full_name), pic:profiles!pic_id(full_name), last_updater:profiles!last_substantive_update_by(full_name)').eq('id', id).single(),
     supabase.from('comments').select('*, profiles(full_name, role)').eq('activity_id', id).order('created_at'),
@@ -35,6 +36,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
     supabase.from('profiles').select('*, departments(name)').eq('id', user.id).single(),
     supabase.from('tasks').select('*, profiles(full_name)').eq('activity_id', id).order('created_at'),
     supabase.from('activity_decisions').select('*, decider:profiles!decided_by(full_name)').eq('activity_id', id).order('created_at', { ascending: false }),
+    supabase.from('daily_logs').select('*, profiles(full_name)').eq('activity_id', id).order('log_date', { ascending: false }).limit(30),
   ])
 
   if (!activity) notFound()
@@ -137,6 +139,14 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="logs" className="flex-1">
+            Log
+            {(dailyLogs?.length ?? 0) > 0 && (
+              <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'var(--navy-100)', color: 'var(--navy-600)' }}>
+                {dailyLogs?.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="detail"      className="flex-1">Detail</TabsTrigger>
           <TabsTrigger value="comments"    className="flex-1">
             Komentar
@@ -162,6 +172,34 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             tasks={(tasks as Task[]) ?? []}
             currentUser={currentUser}
           />
+        </TabsContent>
+
+        <TabsContent value="logs" className="mt-4 space-y-2">
+          {(dailyLogs?.length ?? 0) === 0 ? (
+            <div className="text-center py-10 bg-white rounded-xl" style={{ border: '1px solid var(--cream-border)' }}>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                Belum ada log harian yang terkait kegiatan ini.
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                Saat mengisi Log Harian, pilih kegiatan ini di kolom &ldquo;Kegiatan utama terkait&rdquo;.
+              </p>
+            </div>
+          ) : (
+            (dailyLogs as DailyLog[]).map((log) => (
+              <div key={log.id} className="bg-white rounded-xl p-4" style={{ border: '1px solid var(--cream-border)' }}>
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <b style={{ color: 'var(--text-secondary)' }}>{log.profiles?.full_name}</b>
+                  <span>{formatDate(log.log_date)}</span>
+                  {log.location && (
+                    <span className="flex items-center gap-1"><MapPin size={11} />{log.location}</span>
+                  )}
+                </div>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed mt-1.5" style={{ color: 'var(--text-primary)' }}>
+                  {log.content}
+                </p>
+              </div>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="detail" className="mt-4 space-y-4">
