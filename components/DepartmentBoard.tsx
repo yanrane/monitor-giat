@@ -108,18 +108,38 @@ export function DepartmentBoard({ department, activities, canAdd = false }: Depa
             <span>Progress</span>
           </div>
 
-          {/* Rows */}
+          {/* Rows — kegiatan aktif tampil langsung, selesai dilipat */}
           <div className="bg-white divide-y divide-[--cream-border]">
             {activities.length === 0 ? (
               <div className="px-4 py-6 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
                 Belum ada kegiatan
               </div>
             ) : (
-              activities.map((activity) => (
-                <ProjectRow key={activity.id} activity={activity} accent={accent} />
-              ))
+              activities
+                .filter((a) => a.status !== 'selesai')
+                .map((activity) => (
+                  <ProjectRow key={activity.id} activity={activity} accent={accent} />
+                ))
             )}
           </div>
+          {doneActs > 0 && (
+            <details className="bg-white" style={{ borderTop: '1px solid var(--cream-border)' }}>
+              <summary
+                className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold cursor-pointer select-none transition-colors hover:bg-[--surface-2]"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <CheckCircle2 size={13} style={{ color: '#1e7a56' }} />
+                Selesai ({doneActs}) — klik untuk membuka
+              </summary>
+              <div className="divide-y divide-[--cream-border]" style={{ borderTop: '1px solid var(--cream-border)' }}>
+                {activities
+                  .filter((a) => a.status === 'selesai')
+                  .map((activity) => (
+                    <ProjectRow key={activity.id} activity={activity} accent={accent} />
+                  ))}
+              </div>
+            </details>
+          )}
 
           {/* Add button */}
           {canAdd && (

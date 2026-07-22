@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { Lightbulb } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { ActivityForm } from '@/components/ActivityForm'
 import { type Department, type Profile, DEPT_BG_COLORS } from '@/lib/types'
@@ -33,6 +35,23 @@ export default async function NewActivityPage({ searchParams }: { searchParams: 
         <h1 className="font-serif leading-tight" style={{ fontSize: '26px', color: 'var(--navy-900)' }}>
           Tambah Kegiatan
         </h1>
+      </div>
+
+      {/* Panduan: kegiatan = pekerjaan utama, detail masuk tab Pekerjaan */}
+      <div
+        className="rounded-xl px-4 py-3.5 flex items-start gap-2.5"
+        style={{ background: 'var(--warn-bg)', borderLeft: '3px solid var(--warn)' }}
+      >
+        <Lightbulb size={15} className="shrink-0 mt-0.5" style={{ color: 'var(--warn)' }} />
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+          <b>Kegiatan = pekerjaan utama</b> yang berjalan berminggu-minggu (perkara, proyek,
+          program, kontrak besar). Rapat, pendampingan, atau langkah yang merupakan bagian dari
+          pekerjaan yang sudah ada <b>jangan dibuat sebagai kegiatan baru</b> — buka{' '}
+          <Link href={`/departments/${dept}`} className="underline font-semibold" style={{ color: 'var(--warn)' }}>
+            kegiatan induknya
+          </Link>{' '}
+          lalu tambahkan di tab <b>Pekerjaan</b>.
+        </p>
       </div>
 
       <div
