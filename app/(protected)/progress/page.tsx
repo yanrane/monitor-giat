@@ -253,17 +253,24 @@ export default async function ProgressPage({ searchParams }: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('role').eq('id', user.id).single()
+  // Paralel — tiap roundtrip DB ±100ms; berurutan bikin halaman lemot
+  const [{ data: profile }, { data: items }, { data: peopleRaw }] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    supabase
+      .from('progress_items')
+      .select('*, pic:profiles!progress_items_pic_id_fkey(id, full_name, role, dept_id, phone, departments(id, name))')
+      .order('status', { ascending: true })
+      .order('target_date', { ascending: true }),
+    supabase
+      .from('profiles')
+      .select('id, full_name, role, dept_id, created_at, departments(id, name)')
+      .neq('role', 'kadiv')
+      .eq('is_active', true)
+      .order('full_name'),
+  ])
   if (!profile) redirect('/login')
 
   const isKadiv = profile.role === 'kadiv'
-
-  const { data: items } = await supabase
-    .from('progress_items')
-    .select('*, pic:profiles!progress_items_pic_id_fkey(id, full_name, role, dept_id, phone, departments(id, name))')
-    .order('status', { ascending: true })
-    .order('target_date', { ascending: true })
 
   const allItems = (items ?? []) as unknown as ItemWithPic[]
   const today = todayStr()
@@ -292,17 +299,8 @@ export default async function ProgressPage({ searchParams }: {
   const activeGroups = [...overdue, ...running]
   const doneGroups = [...onTime, ...lateDone]
 
-  // Daftar PIC untuk form (semua user selain kadiv)
-  let people: Profile[] = []
-  if (isKadiv) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, role, dept_id, created_at, departments(id, name)')
-      .neq('role', 'kadiv')
-      .eq('is_active', true)
-      .order('full_name')
-    people = (data ?? []) as unknown as Profile[]
-  }
+  // Daftar PIC untuk form — hanya dipakai kalau kadiv
+  const people: Profile[] = isKadiv ? ((peopleRaw ?? []) as unknown as Profile[]) : []
 
   return (
     <div className="space-y-6 max-w-5xl">

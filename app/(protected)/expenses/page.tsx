@@ -14,19 +14,18 @@ export default async function ExpensesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, departments(name)')
-    .eq('id', user.id)
-    .single()
+  // Paralel — tiap roundtrip DB ±100ms; berurutan bikin halaman lemot
+  const [{ data: profile }, { data: expenses }, { data: setting }] = await Promise.all([
+    supabase.from('profiles').select('*, departments(name)').eq('id', user.id).single(),
+    supabase
+      .from('expenses')
+      .select('*, profiles(full_name), departments(name)')
+      .order('expense_date', { ascending: false }),
+    supabase.from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle(),
+  ])
 
   if (!profile) redirect('/login')
   const currentUser = profile as Profile
-
-  const { data: expenses } = await supabase
-    .from('expenses')
-    .select('*, profiles(full_name), departments(name)')
-    .order('expense_date', { ascending: false })
 
   const expenseList = (expenses as Expense[]) ?? []
   const isKadiv     = currentUser.role === 'kadiv'
@@ -37,8 +36,6 @@ export default async function ExpensesPage() {
 
   // Pagu anggaran OPEX — staf boleh mengisi, tapi panel sisa hanya kadiv
   // (total pengeluaran yang terlihat non-kadiv cuma slice dept-nya)
-  const { data: setting } = await supabase
-    .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
   const pagu = setting?.value ? Number(setting.value) : null
 
   // Pisah OPEX vs CAPEX — masing-masing pagu & pengeluaran sendiri

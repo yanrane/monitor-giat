@@ -66,19 +66,21 @@ export default async function AdministrasiPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles').select('*').eq('id', user.id).single()
+  // Paralel — tiap roundtrip DB ±100ms; berurutan bikin halaman lemot
+  const [{ data: profile }, { data: expenses }, { data: setting }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase
+      .from('expenses')
+      .select('*, profiles(full_name), departments(name)')
+      .order('expense_date', { ascending: false }),
+    supabase.from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle(),
+  ])
   if (!profile) redirect('/login')
 
   const isKadiv   = profile.role === 'kadiv'
   const canInput  = !isKadiv
   // Budget viewer (mis. staf administrasi tertentu) = panel anggaran penuh
   const canViewBudget = isKadiv || profile.is_budget_viewer === true
-
-  const { data: expenses } = await supabase
-    .from('expenses')
-    .select('*, profiles(full_name), departments(name)')
-    .order('expense_date', { ascending: false })
 
   const expenseList = (expenses as Expense[]) ?? []
 
@@ -97,8 +99,6 @@ export default async function AdministrasiPage() {
   const grandTotal = Object.values(totals).reduce((a, b) => a + b, 0)
 
   // Pagu anggaran (sumber sama dgn halaman Pengeluaran; staf boleh isi, sisa hanya kadiv)
-  const { data: setting } = await supabase
-    .from('app_settings').select('value').eq('key', 'budget_pagu').maybeSingle()
   const pagu = setting?.value ? Number(setting.value) : null
 
   return (

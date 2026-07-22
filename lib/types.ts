@@ -216,10 +216,10 @@ export const CONTROL_STATUS_COLORS: Record<ControlStatus, string> = {
 }
 
 export const DECISION_ACTION_LABELS: Record<DecisionAction, string> = {
-  approve_continue: 'Approve & Continue',
+  approve_continue: 'Setujui & Lanjutkan',
   beri_arahan: 'Beri Arahan',
   minta_klarifikasi: 'Minta Klarifikasi',
-  eskalasi_kembalikan: 'Eskalasi / Kembalikan ke PIC',
+  eskalasi_kembalikan: 'Kembalikan ke PIC',
 }
 
 // Status kendali hasil keputusan — needs_kadiv_decision dan escalated
