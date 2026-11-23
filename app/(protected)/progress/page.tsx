@@ -271,7 +271,7 @@ export default async function ProgressPage({ searchParams }: {
   if (!user) redirect('/login')
 
   // Paralel — tiap roundtrip DB ±100ms; berurutan bikin halaman lemot
-  const [{ data: profile }, { data: items }, { data: peopleRaw }] = await Promise.all([
+  const [{ data: profile }, { data: items }, { data: peopleRaw }, { count: pendingProposals }] = await Promise.all([
     supabase.from('profiles').select('role').eq('id', user.id).single(),
     supabase
       .from('progress_items')
@@ -284,6 +284,11 @@ export default async function ProgressPage({ searchParams }: {
       .neq('role', 'kadiv')
       .eq('is_active', true)
       .order('full_name'),
+    // Usulan disposisi TEO yang masih menunggu keputusan Kadiv (RLS: hanya kadiv yang bisa melihat)
+    supabase
+      .from('progress_proposals')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'menunggu'),
   ])
   if (!profile) redirect('/login')
 
@@ -341,6 +346,23 @@ export default async function ProgressPage({ searchParams }: {
             : 'Pekerjaan yang ditugaskan Kepala Divisi — tandai selesai jika sudah rampung'}
         </p>
       </div>
+
+      {/* Penanda usulan disposisi TEO yang belum diputus — hanya untuk Kadiv */}
+      {isKadiv && (pendingProposals ?? 0) > 0 && (
+        <Link
+          href="/usulan"
+          className="flex items-center gap-3 rounded-2xl px-4 py-3"
+          style={{ background: 'var(--warn-bg)', border: '1px solid var(--warn)' }}
+        >
+          <AlertTriangle size={16} style={{ color: 'var(--warn)' }} />
+          <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+            <strong>{pendingProposals} usulan</strong> dari disposisi TEO menunggu persetujuan.
+          </span>
+          <span className="ml-auto inline-flex items-center gap-1 text-sm font-semibold" style={{ color: 'var(--navy-600)' }}>
+            Tinjau <ChevronDown size={14} className="-rotate-90" />
+          </span>
+        </Link>
+      )}
 
       {/* Summary stats — klik untuk filter, klik lagi untuk semua */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
