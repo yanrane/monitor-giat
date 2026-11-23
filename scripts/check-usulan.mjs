@@ -31,7 +31,7 @@ assert.equal(parseProposalInput(null, ctx).ok, false)
 
 assert.equal(safeNextPath('/usulan/abc'), '/usulan/abc')
 assert.equal(safeNextPath('/usulan/abc?x=1'), '/usulan/abc?x=1')
-for (const evil of ['//evil.com', '/\\evil.com', 'https://evil.com', 'evil', '', null, undefined]) {
+for (const evil of ['//evil.com', '/\\evil.com', '/\t/evil.com', '/\n/evil.com', '/\r\\evil.com', 'https://evil.com', 'evil', '', null, undefined]) {
   assert.equal(safeNextPath(evil), null)
 }
 console.log('check-usulan: OK')
