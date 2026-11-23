@@ -7,7 +7,10 @@ export function safeNextPath(next: string | null | undefined): string | null {
   if (!next.startsWith('/') || next.startsWith('//') || next.startsWith('/\\')) return null
   try {
     const url = new URL(next, BASE)
-    return url.origin === BASE ? url.pathname + url.search + url.hash : null
+    if (url.origin !== BASE) return null
+    // Periksa hasil normalisasi juga: "/.//evil.com" → pathname "//evil.com"
+    if (url.pathname.startsWith('//') || url.pathname.startsWith('/\\')) return null
+    return url.pathname + url.search + url.hash
   } catch {
     return null
   }
