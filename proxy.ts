@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { safeNextPath } from '@/lib/safe-next'
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -37,20 +38,27 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith('/notifications') ||
       pathname.startsWith('/admin') ||
       pathname.startsWith('/daily-log') ||
-      pathname.startsWith('/monitor')
+      pathname.startsWith('/monitor') ||
+      pathname.startsWith('/progress') ||
+      pathname.startsWith('/usulan')
 
     if (isProtected) {
+      // Bawa tujuan asli (?next=) supaya link WA tetap terbuka setelah login
       const url = request.nextUrl.clone()
       url.pathname = '/login'
+      url.search = ''
+      url.searchParams.set('next', pathname + request.nextUrl.search)
       return NextResponse.redirect(url)
     }
   }
 
-  // Redirect authenticated users away from login
+  // Redirect authenticated users away from login (ke tujuan ?next= bila aman)
   if (user && pathname === '/login') {
     const url = request.nextUrl.clone()
+    const next = safeNextPath(request.nextUrl.searchParams.get('next'))
+    url.search = ''
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    return NextResponse.redirect(next ? new URL(next, request.url) : url)
   }
 
   return supabaseResponse

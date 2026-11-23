@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { type Department } from '@/lib/types'
+import { safeNextPath } from '@/lib/safe-next'
 
 export default function LoginPage() {
   const [mode, setMode]           = useState<'login' | 'register' | 'forgot'>('login')
@@ -31,6 +32,14 @@ export default function LoginPage() {
     if (error) {
       toast.error('Email atau password salah')
       setLoading(false)
+      return
+    }
+    // Kembali ke halaman tujuan (mis. link usulan dari WA). window.location, bukan
+    // useSearchParams, supaya halaman login tidak butuh Suspense boundary.
+    const next = safeNextPath(new URLSearchParams(window.location.search).get('next'))
+    if (next) {
+      router.push(next)
+      router.refresh()
       return
     }
     const { data: profile } = await supabase
