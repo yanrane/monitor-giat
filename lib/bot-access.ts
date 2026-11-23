@@ -118,6 +118,7 @@ interface ActivityRow {
 }
 interface ProgressItemRow {
   id: string; title: string; pic_id: string; target_date: string; status: string; updated_at: string
+  progress_proposals: { teo_ref: string } | null
 }
 interface DailyLogRow { user_id: string; log_date: string; created_at: string; content?: string }
 
@@ -141,6 +142,7 @@ export interface BotSummary {
   butuh_kadiv_hari_ini: {
     total: number
     per_alasan: Record<AttentionReason, number>
+    usulan_menunggu: number // usulan target dari disposisi TEO yang belum diputus Kadiv
     daftar: Array<{
       judul: string
       bidang: string
@@ -174,6 +176,7 @@ export interface BotSummary {
       target: string
       hari_terlambat: number
       rekor_terakhir_diubah: string
+      teo_ref: string | null // nomor disposisi TEO bila item berasal dari usulan
     }>
   }>
   personel: {
@@ -234,7 +237,7 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
     ),
     pageAll<ProgressItemRow>(
       'progress_items',
-      'id, title, pic_id, target_date, status, updated_at',
+      'id, title, pic_id, target_date, status, updated_at, progress_proposals(teo_ref)',
       (q: any) =>
         isDeptScoped
           ? q.in('pic_id', active.filter((p) => p.dept_id === token.dept_id).map((p) => p.id).concat(['00000000-0000-0000-0000-000000000000']))
@@ -298,6 +301,7 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
           target: p.target_date,
           hari_terlambat: daysBetween(p.target_date, today),
           rekor_terakhir_diubah: p.updated_at?.slice(0, 10) ?? '-',
+          teo_ref: p.progress_proposals?.teo_ref ?? null,
         }))
         .sort((x, y) => y.hari_terlambat - x.hari_terlambat)
 
@@ -311,6 +315,16 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
     })
 
   const attention = buildAttention(activities, today)
+
+  // Usulan disposisi adalah urusan Kadiv (lintas bidang) → token per bidang selalu 0
+  let usulanMenunggu = 0
+  if (!isDeptScoped) {
+    const { count } = await admin
+      .from('progress_proposals')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'menunggu')
+    usulanMenunggu = count ?? 0
+  }
 
   const belumLog = scopedPeople.filter((p) => !loggedToday.has(p.id)).map((p) => p.full_name)
   const sudahLog = scopedPeople.filter((p) => loggedToday.has(p.id)).map((p) => p.full_name)
@@ -337,6 +351,7 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
     butuh_kadiv_hari_ini: {
       total: attention.total,
       per_alasan: attention.counts,
+      usulan_menunggu: usulanMenunggu,
       daftar: attention.items.map((e) => ({
         judul: e.activity.title,
         bidang: deptName.get(e.activity.dept_id) ?? '-',
@@ -371,6 +386,7 @@ export function summaryToText(s: BotSummary): string {
 
   const k = s.butuh_kadiv_hari_ini
   L.push(`*Butuh Kadiv hari ini* (${k.daftar.length} dari ${k.total})`)
+  if (k.usulan_menunggu > 0) L.push(`- Usulan target menunggu Kadiv: ${k.usulan_menunggu}`)
   if (k.total === 0) L.push('- Tidak ada ✅')
   k.daftar.forEach((e, i) => {
     const tag = e.alasan
@@ -413,7 +429,7 @@ export function summaryToText(s: BotSummary): string {
     if (b.progres_terlambat.length) {
       L.push('- Progres terlambat:')
       for (const p of b.progres_terlambat.slice(0, 8)) {
-        L.push(`  • ${p.judul} — PIC ${p.pic}, target ${p.target} (${p.hari_terlambat} hari)`)
+        L.push(`  • ${p.judul}${p.teo_ref ? ` (TEO ${p.teo_ref})` : ''} — PIC ${p.pic}, target ${p.target} (${p.hari_terlambat} hari)`)
       }
     }
     L.push('')

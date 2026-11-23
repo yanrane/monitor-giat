@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DepartmentBoard } from '@/components/DepartmentBoard'
 import { StaleActivities, type StaleActivity } from '@/components/StaleActivities'
 import { CompletionTrend } from '@/components/CompletionTrend'
-import { type Activity, type Department, type Task, type ProgressItem, DEPT_BG_COLORS, CONTROL_STATUS_LABELS } from '@/lib/types'
+import { type Activity, type Department, type Task, type ProgressItem, type ProgressProposal, DEPT_BG_COLORS, CONTROL_STATUS_LABELS } from '@/lib/types'
 import { StatusBattery, BatteryLegend, type BatterySegment } from '@/components/StatusBattery'
 import { AlertTriangle, CalendarClock, Building2, Users, Target, CircleCheck, ChevronDown } from 'lucide-react'
 import { formatDate, daysSinceWIB, staleLevel, wibDateStr } from '@/lib/utils'
@@ -16,6 +16,8 @@ const REASON_STYLE: Record<AttentionReason, { color: string; bg: string }> = {
   tenggat_dekat: { color: 'var(--warn)', bg: 'var(--warn-bg)' },
   tanpa_update:  { color: '#5b6b80',     bg: '#eef1f5' },
 }
+
+const PROPOSAL_STYLE = { color: 'var(--navy-600)', bg: 'var(--navy-50)' }
 
 const REASON_SUMMARY: Record<AttentionReason, string> = {
   keputusan: 'butuh keputusan',
@@ -148,6 +150,7 @@ export default async function DashboardPage() {
     { data: activities },
     { data: tasks },
     { data: openProgressRaw },
+    { data: proposalsRaw },
   ] = await Promise.all([
     supabase.from('departments').select('*').order('sort_order'),
     supabase
@@ -164,6 +167,12 @@ export default async function DashboardPage() {
       .select('*, pic:pic_id(full_name)')
       .neq('status', 'done')
       .order('target_date', { ascending: true }),
+    // Usulan target dari disposisi TEO yang menunggu Kadiv (RLS: hanya Kadiv)
+    supabase
+      .from('progress_proposals')
+      .select('id, teo_ref, perihal, judul, pic_ids, target_date')
+      .eq('status', 'menunggu')
+      .order('created_at', { ascending: true }),
   ])
 
   const depts   = (departments as Department[]) ?? []
@@ -198,6 +207,15 @@ export default async function DashboardPage() {
   const ATTENTION_TOP = 7
   const attentionTop  = attention.items.slice(0, ATTENTION_TOP)
   const attentionRest = attention.items.slice(ATTENTION_TOP)
+
+  // Usulan tampil di atas kegiatan dan tidak memakan jatah 7 teratas
+  const proposals = (proposalsRaw ?? []) as Pick<ProgressProposal, 'id' | 'teo_ref' | 'perihal' | 'judul' | 'pic_ids' | 'target_date'>[]
+  const proposalPicIds = [...new Set(proposals.flatMap((p) => p.pic_ids))]
+  const { data: proposalPics } = proposalPicIds.length
+    ? await supabase.from('profiles').select('id, full_name').in('id', proposalPicIds)
+    : { data: [] as { id: string; full_name: string }[] }
+  const picName = new Map((proposalPics ?? []).map((p) => [p.id as string, p.full_name as string]))
+  const needsYou = attention.total + proposals.length
 
   // Target terdekat: grup kerja tim (title|target_date), maks 5
   const openProgress = (openProgressRaw ?? []) as ProgressItem[]
@@ -274,7 +292,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Butuh Anda hari ini: pengecualian saja; terlipat, judul memuat ringkasan ── */}
-      {attention.total === 0 ? (
+      {needsYou === 0 ? (
         <p
           className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm"
           style={{ color: 'var(--ok)', background: 'var(--surface)', border: '1px solid var(--border)' }}
@@ -296,12 +314,13 @@ export default async function DashboardPage() {
                 className="text-xs font-bold px-2 py-0.5 rounded-md tabular-nums"
                 style={{ background: 'var(--navy-50)', color: 'var(--navy-600)' }}
               >
-                {attention.total}
+                {needsYou}
               </span>
               <span className="ml-auto hidden sm:block text-xs" style={{ color: 'var(--text-tertiary)' }}>
                 <span className="group-open/att:hidden">klik untuk membuka</span>
                 <span className="hidden group-open/att:inline">
-                  {attentionRest.length > 0 ? `${attentionTop.length} teratas dari ${attention.total}` : `${attention.total} hal`}
+                  {proposals.length > 0 && `${proposals.length} usulan · `}
+                  {attentionRest.length > 0 ? `${attentionTop.length} teratas dari ${attention.total} kegiatan` : `${attention.total} kegiatan`}
                 </span>
               </span>
               <ChevronDown
@@ -311,6 +330,14 @@ export default async function DashboardPage() {
               />
             </div>
             <div className="flex flex-wrap gap-1.5 mt-2 pl-8">
+              {proposals.length > 0 && (
+                <span
+                  className="text-[11px] font-semibold px-2 py-0.5 rounded tabular-nums"
+                  style={{ color: PROPOSAL_STYLE.color, background: PROPOSAL_STYLE.bg }}
+                >
+                  {proposals.length} usulan target
+                </span>
+              )}
               {(Object.keys(attention.counts) as AttentionReason[])
                 .filter((r) => attention.counts[r] > 0)
                 .map((r) => (
@@ -326,6 +353,27 @@ export default async function DashboardPage() {
           </summary>
 
           <div style={{ borderTop: '1px solid var(--separator)' }}>
+            {proposals.length > 0 && (
+              <div className="divide-y divide-(--separator)" style={{ borderBottom: '1px solid var(--separator)' }}>
+                {proposals.map((p) => (
+                  <Link key={p.id} href={`/usulan/${p.id}`} className="block px-4 py-3 transition-colors hover:bg-(--surface-2)">
+                    <span
+                      className="inline-block text-[10.5px] font-bold px-1.5 py-px rounded tracking-wide mb-1"
+                      style={{ color: PROPOSAL_STYLE.color, background: PROPOSAL_STYLE.bg }}
+                    >
+                      USULAN TARGET
+                    </span>
+                    <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: 'var(--text-primary)' }}>{p.judul}</p>
+                    <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                      {p.perihal} · TEO {p.teo_ref}
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                      {p.pic_ids.map((id) => picName.get(id) ?? 'PIC tidak dikenal').join(', ')} · usulan tenggat {formatDate(p.target_date)}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
             <div className="divide-y divide-(--separator)">
               {attentionTop.map((e) => <AttentionRow key={e.activity.id} e={e} />)}
             </div>
