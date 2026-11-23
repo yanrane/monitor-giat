@@ -191,6 +191,7 @@ export default async function DashboardPage() {
   const cleanupT   = overdueAll.filter(t => lateDaysOf(t) > CLEANUP_DAYS)
   const todayT     = pending.filter(t => t.due_date === today)
   const urgentList = [...overdueT, ...todayT].slice(0, 8)
+  const showTasks  = urgentList.length > 0 || cleanupT.length > 0
 
   // Semua pengecualian; 7 teratas tampil, sisanya bisa dibuka
   const attention = buildAttention(acts, today, Infinity)
@@ -209,6 +210,7 @@ export default async function DashboardPage() {
       return accum
     }, {})
   ).slice(0, 5)
+  const showUpcoming = upcomingGroups.length > 0
 
   // ── Legal Command System ────────────────────────────────
   const isOpen = (a: Activity) => a.status !== 'selesai' && a.status !== 'ditunda'
@@ -386,9 +388,10 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Perlu Perhatian + Target Terdekat ──────────────── */}
-      {(urgentList.length > 0 || cleanupT.length > 0 || upcomingGroups.length > 0) && (
-        <div className="grid gap-4 lg:grid-cols-2 items-start">
-          {(urgentList.length > 0 || cleanupT.length > 0) && (
+      {(showTasks || showUpcoming) && (
+        // Dua kolom hanya kalau keduanya ada (tinggi disamakan); kalau satu, selebar penuh
+        <div className={`grid gap-4 ${showTasks && showUpcoming ? 'lg:grid-cols-2' : ''}`}>
+          {showTasks && (
             <section
               className="rounded-2xl overflow-hidden"
               style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(11,25,41,0.05)' }}
@@ -462,7 +465,7 @@ export default async function DashboardPage() {
             </section>
           )}
 
-          {upcomingGroups.length > 0 && (
+          {showUpcoming && (
             <section
               className="rounded-2xl overflow-hidden"
               style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(11,25,41,0.05)' }}
@@ -515,8 +518,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* ── Widget ala monday: battery per departemen + beban kerja per PIC ── */}
-      <div className="grid gap-4 lg:grid-cols-2 items-start">
+      {/* ── Widget ala monday: battery per departemen + beban kerja per PIC (selebar penuh) ── */}
+      <div className="grid gap-4">
         <Widget icon={<Building2 size={13} />} title="Sebaran status per departemen" note="kegiatan">
           {depts.map((dept) => {
             const list = actsByDept(dept.id)
