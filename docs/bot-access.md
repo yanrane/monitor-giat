@@ -59,3 +59,48 @@ Catatan kepatuhan: Grok Bot menjalankan pekerjaan di komputer cloud pihak ketiga
 Divisi Hukum yang dikirim ke bot pada dasarnya keluar dari lingkungan PT Timah. Untuk itu
 payload dijaga minimum dan read-only. Jangan tambahkan nomor telepon, isi dokumen, atau
 data perkara ke payload tanpa persetujuan Kadiv.
+
+## 5. Usulan target dari disposisi TEO (khusus agent pengusul)
+
+Satu-satunya jalur tulis untuk bot: **mengusulkan**. Bot tidak bisa menyetujui, mengubah, atau
+menghapus item. Item `progress_items` baru terbentuk setelah Kadiv menekan **Setujui** di
+`/usulan/<id>`. Kontrak lengkap KEVIN: `docs/superpowers/specs/2026-11-23-usulan-disposisi-teo-design.md` §6.5.
+
+Izin: token butuh `can_propose = true` (default `false`). Diberikan Boss lewat SQL Editor:
+
+```sql
+update bot_tokens set can_propose = true where label = '<label token KEVIN>';
+```
+
+| Jalur | Fungsi |
+|---|---|
+| `GET /api/bot/people` | `[{id, nama, bidang}]` profil aktif non-Kadiv untuk memetakan penerima disposisi |
+| `POST /api/bot/proposals` | Kirim usulan; respons `{id, status, url}` — `url` dikirim ke WA Kadiv |
+| `GET /api/bot/proposals?status=&sejak=YYYY-MM-DD` | Keputusan Kadiv (judul akhir, PIC, tenggat akhir, alasan tolak) |
+
+Ketiganya menolak token tanpa `can_propose` (403).
+
+Body `POST` (JSON):
+
+```json
+{
+  "teo_ref": "ND-123/2026",
+  "teo_tanggal": "2026-11-23",
+  "perihal": "Permohonan review draft PKS",
+  "instruksi": "Pelajari dan beri masukan",
+  "judul": "Review draft PKS dengan PT X",
+  "pic_ids": ["<uuid dari /api/bot/people>"],
+  "target_date": "2026-11-26",
+  "alasan_tenggat": "Review kontrak: 3 hari kerja"
+}
+```
+
+Aturan:
+
+- Wajib: `teo_ref` (≤100), `perihal` (≤300), `judul` (≤200), `pic_ids` (≥1, profil aktif non-Kadiv), `target_date` (hari ini s.d. +365 hari, WIB).
+- Opsional: `teo_tanggal`, `instruksi` (≤1000), `alasan_tenggat` (≤300).
+- **Idempoten per `teo_ref`**: kirim ulang → `200` dengan usulan yang sudah ada; isinya tidak ditimpa.
+  Usulan baru → `201`. Validasi gagal → `400 {errors: [...]}`.
+- `/api/bot/summary` kini memuat `butuh_kadiv_hari_ini.usulan_menunggu` dan `teo_ref` di tiap
+  entri `progres_terlambat` (null untuk item manual) — dipakai KEVIN untuk teguran WA ke PIC.
+- Jangan kirim isi atau lampiran surat — cukup nomor, tanggal, perihal, dan instruksi disposisi.
