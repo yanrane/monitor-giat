@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { wibDateStr } from '@/lib/utils'
-import { createProgressItems } from '../../progress/create-items'
+import { notifyNewItems } from '../../progress/create-items'
 
 async function requireKadiv() {
   const supabase = await createClient()
@@ -40,31 +40,15 @@ export async function approveProposal(id: string, formData: FormData): Promise<{
     .from('profiles').select('id').in('id', picIds).eq('is_active', true).neq('role', 'kadiv')
   if ((valid ?? []).length !== picIds.length) return { error: 'Ada PIC yang tidak aktif atau tidak dikenal' }
 
-  const { data: claimed, error: claimError } = await supabase
-    .from('progress_proposals')
-    .update({
-      status: 'disetujui',
-      decided_by: user.id,
-      decided_at: new Date().toISOString(),
-      judul: title,
-      pic_ids: picIds,
-      target_date: targetDate,
-    })
-    .eq('id', id)
-    .eq('status', 'menunggu')
-    .select('id')
-  if (claimError) return { error: claimError.message }
-  if (!claimed?.length) return { error: 'Usulan sudah diputus' }
-
-  const { error } = await createProgressItems(supabase, {
-    title, picIds, targetDate, createdBy: user.id, proposalId: id,
+  // Klaim + buat item dalam satu transaksi DB (approve_proposal, migration 018):
+  // gagal di tengah → semua batal; 0 → sudah diputus (klik ganda / tab kedua)
+  const { data: claimed, error } = await supabase.rpc('approve_proposal', {
+    p_id: id, p_judul: title, p_pic_ids: picIds, p_target: targetDate,
   })
-  if (error) {
-    // Item gagal dibuat → kembalikan usulan ke antrean supaya bisa dicoba lagi
-    await supabase.from('progress_proposals').update({ status: 'menunggu', decided_by: null, decided_at: null }).eq('id', id)
-    return { error: `Gagal membuat item: ${error}` }
-  }
+  if (error) return { error: `Gagal menyetujui: ${error.message}` }
+  if (claimed !== 1) return { error: 'Usulan sudah diputus' }
 
+  await notifyNewItems({ title, picIds, targetDate })
   refresh(id)
   return {}
 }

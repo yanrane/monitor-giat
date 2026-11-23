@@ -45,3 +45,22 @@ ALTER TABLE progress_items
 -- Izin eksplisit bot untuk mengusulkan; terpisah dari can_write
 ALTER TABLE bot_tokens
   ADD COLUMN IF NOT EXISTS can_propose boolean NOT NULL DEFAULT false;
+
+-- Persetujuan atomik: klaim usulan + buat item per PIC dalam satu transaksi.
+-- SECURITY INVOKER → RLS tetap berlaku sebagai Kadiv yang login. Mengembalikan 0 bila
+-- usulan sudah diputus / bukan Kadiv (klik ganda aman), 1 bila berhasil; error → semua batal.
+CREATE OR REPLACE FUNCTION approve_proposal(p_id uuid, p_judul text, p_pic_ids uuid[], p_target date)
+RETURNS integer LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
+DECLARE n integer;
+BEGIN
+  UPDATE progress_proposals
+     SET status = 'disetujui', decided_by = auth.uid(), decided_at = now(),
+         judul = p_judul, pic_ids = p_pic_ids, target_date = p_target
+   WHERE id = p_id AND status = 'menunggu';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n = 0 THEN RETURN 0; END IF;
+
+  INSERT INTO progress_items (title, pic_id, target_date, created_by, proposal_id)
+  SELECT p_judul, pic, p_target, auth.uid(), p_id FROM unnest(p_pic_ids) AS pic;
+  RETURN n;
+END $$;

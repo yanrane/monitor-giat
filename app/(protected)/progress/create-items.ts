@@ -19,9 +19,13 @@ export async function createProgressItems(
     }))
   )
   if (error) return { error: error.message }
+  await notifyNewItems(input)
+  return { error: null }
+}
 
-  // Notifikasi lonceng ke tiap PIC (insert notifications hanya bisa via service_role).
-  // Gagal notif tidak boleh menggagalkan penambahan item.
+// Notifikasi lonceng ke tiap PIC (insert notifications hanya bisa via service_role).
+// Gagal notif tidak boleh menggagalkan penambahan item.
+export async function notifyNewItems(input: { title: string; picIds: string[]; targetDate: string }) {
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
     await createAdminClient().from('notifications').insert(
       input.picIds.map((picId) => ({
