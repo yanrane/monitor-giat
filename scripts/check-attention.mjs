@@ -1,6 +1,6 @@
 // Cek cepat logika "Butuh Anda hari ini": node --experimental-strip-types scripts/check-attention.mjs
 import assert from 'node:assert/strict'
-import { buildAttention, kadivBriefingLines } from '../lib/attention.ts'
+import { buildAttention, kadivBriefingLines, summarizeLogs, logFreshness, lastTouchDate } from '../lib/attention.ts'
 
 const today = '2026-11-23'
 const fresh = '2026-11-22T03:00:00Z'
@@ -37,4 +37,35 @@ const one = kadivBriefingLines({
     langkah_berikutnya: 'Kirim draft', tenggat_langkah: '2026-11-20', hari_lewat_tenggat: 3, hari_tanpa_update: 2 }],
 })
 assert.deepEqual(one.slice(1, 3), ['1. X (Litigasi, PIC: Y) — lewat tenggat 3 hari, P1', '   → Kirim draft (tenggat 2026-11-20)'])
+
+// Log harian terkait kegiatan = jejak progres (A: board, B: tidak lagi "diam")
+// Baris diurutkan log_date DESC, created_at DESC → baris pertama per kegiatan = log terbaru
+const stats = summarizeLogs([
+  { activity_id: 'a1', log_date: '2026-11-23', content: 'Review final oleh user', author: 'Algy' },
+  { activity_id: null, log_date: '2026-11-23', content: 'Hadir', author: 'Larasati' },
+  { activity_id: 'a2', log_date: '2026-11-20', content: 'Koordinasi BPN', author: 'Ersan' },
+  { activity_id: 'a1', log_date: '2026-11-21', content: 'Draft dikirim', author: 'Algy' },
+  { activity_id: 'a1', log_date: '2026-11-18', content: 'Mulai', author: 'Anggy' },
+])
+assert.deepEqual(Object.keys(stats).sort(), ['a1', 'a2'])            // log "Umum" diabaikan
+assert.deepEqual(stats.a1, { lastDate: '2026-11-23', lastBy: 'Algy', lastContent: 'Review final oleh user', count: 3 })
+assert.equal(stats.a2.count, 1)
+
+assert.equal(logFreshness('2026-11-23', today), 'baru')   // 0 hari
+assert.equal(logFreshness('2026-11-20', today), 'baru')   // 3 hari
+assert.equal(logFreshness('2026-11-16', today), 'sedang') // 7 hari
+assert.equal(logFreshness('2026-11-15', today), 'lama')   // 8 hari
+
+// Tanggal terakhir disentuh = yang paling baru antara update substansi dan log terkait (WIB)
+assert.equal(lastTouchDate('2026-11-01T03:00:00Z', '2026-11-20'), '2026-11-20')
+assert.equal(lastTouchDate('2026-11-22T20:00:00Z', '2026-11-20'), '2026-11-23') // 03:00 WIB 23 Nov
+assert.equal(lastTouchDate('2026-11-01T03:00:00Z', null), '2026-11-01')
+
+// Kegiatan yang update substansinya lama tapi rajin dilog → tidak "diam"
+const withLogs = buildAttention([
+  act('diam-tapi-dilog', { last_substantive_update_at: '2026-10-01T03:00:00Z', last_log_date: '2026-11-21' }),
+  act('diam-sungguhan', { last_substantive_update_at: '2026-10-01T03:00:00Z', last_log_date: '2026-11-01' }),
+], today)
+assert.deepEqual(withLogs.items.map((e) => e.activity.id), ['diam-sungguhan'])
+assert.equal(withLogs.items[0].idleDays, 22) // dihitung dari log 1 Nov, bukan update 1 Okt
 console.log('check-attention: OK')

@@ -22,6 +22,7 @@ export interface AttentionInput {
   next_action_due_date: string | null
   last_substantive_update_at: string | null
   updated_at: string
+  last_log_date?: string | null // log harian terbaru yang terkait kegiatan ini (YYYY-MM-DD)
 }
 
 export interface AttentionEntry<T> {
@@ -35,6 +36,35 @@ const RANK: Record<AttentionReason, number> = { keputusan: 0, lewat_tenggat: 1, 
 
 const wib = (d: string) => new Date(d).toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' })
 const daysBetween = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86400000)
+
+// Tanggal (WIB) kegiatan terakhir "disentuh": update substansi ATAU log harian terkait, mana yang lebih baru.
+// Log harian dihitung sebagai jejak progres (keputusan Boss 24 Nov 2026).
+export function lastTouchDate(substantiveOrUpdatedAt: string, lastLogDate?: string | null): string {
+  const d = wib(substantiveOrUpdatedAt)
+  return lastLogDate && lastLogDate > d ? lastLogDate : d
+}
+
+export interface LogRow { activity_id: string | null; log_date: string; content: string; author?: string | null }
+export interface LogStat { lastDate: string; lastBy: string | null; lastContent: string; count: number }
+
+// Ringkasan log per kegiatan. Baris harus urut log_date DESC lalu created_at DESC:
+// baris pertama per kegiatan = log terbaru. Log "Umum" (tanpa kegiatan) diabaikan.
+export function summarizeLogs(rows: LogRow[]): Record<string, LogStat> {
+  const out: Record<string, LogStat> = {}
+  for (const r of rows) {
+    if (!r.activity_id) continue
+    const s = out[r.activity_id]
+    if (s) s.count += 1
+    else out[r.activity_id] = { lastDate: r.log_date, lastBy: r.author ?? null, lastContent: r.content, count: 1 }
+  }
+  return out
+}
+
+export type LogFreshness = 'baru' | 'sedang' | 'lama'
+export function logFreshness(lastDate: string, today: string): LogFreshness {
+  const days = daysBetween(lastDate, today)
+  return days <= 3 ? 'baru' : days <= 7 ? 'sedang' : 'lama'
+}
 
 export function buildAttention<T extends AttentionInput>(activities: T[], today: string, limit = 7) {
   const all: AttentionEntry<T>[] = []
@@ -51,7 +81,7 @@ export function buildAttention<T extends AttentionInput>(activities: T[], today:
     if (overdueDays > 0) reasons.push('lewat_tenggat')
     else if (due && a.priority === 'p1' && daysBetween(today, due) <= P1_SOON_DAYS) reasons.push('tenggat_dekat')
 
-    const idleDays = daysBetween(wib(a.last_substantive_update_at ?? a.updated_at), today)
+    const idleDays = daysBetween(lastTouchDate(a.last_substantive_update_at ?? a.updated_at, a.last_log_date), today)
     if (idleDays >= IDLE_CRITICAL_DAYS) reasons.push('tanpa_update')
 
     if (reasons.length > 0) all.push({ activity: a, reasons, overdueDays, idleDays })
