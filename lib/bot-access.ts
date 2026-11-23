@@ -26,6 +26,7 @@ export interface BotTokenRow {
   scope: 'all' | 'dept'
   can_read: boolean
   can_write: boolean
+  can_propose: boolean
   is_active: boolean
 }
 
@@ -60,7 +61,7 @@ export async function authorizeBotToken(request: Request): Promise<BotAuthResult
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('bot_tokens')
-    .select('id, label, owner_name, dept_id, scope, can_read, can_write, is_active')
+    .select('id, label, owner_name, dept_id, scope, can_read, can_write, can_propose, is_active')
     .eq('token_hash', hashToken(raw))
     .maybeSingle()
 
