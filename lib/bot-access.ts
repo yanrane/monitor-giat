@@ -72,6 +72,18 @@ export async function authorizeBotToken(request: Request): Promise<BotAuthResult
   return { token: data as BotTokenRow }
 }
 
+// Endpoint khusus agent pengusul (KEVIN): butuh can_propose di atas izin baca.
+// Bot baca-saja lain (mis. Grok per Kabid) tidak melihat daftar orang/usulan disposisi.
+export async function authorizeBotProposer(request: Request, endpoint: string, format: string): Promise<BotAuthResult> {
+  const auth = await authorizeBotToken(request)
+  if (auth.error || !auth.token) return auth
+  if (!auth.token.can_propose) {
+    await recordBotAccess(auth.token.id, endpoint, format, false, 'tanpa izin can_propose')
+    return { error: 'Token bot tanpa izin mengusulkan', status: 403 }
+  }
+  return auth
+}
+
 export async function recordBotAccess(
   tokenId: string,
   endpoint: string,

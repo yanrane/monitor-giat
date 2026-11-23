@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authorizeBotToken, recordBotAccess } from '@/lib/bot-access'
+import { authorizeBotProposer, recordBotAccess } from '@/lib/bot-access'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/bot/people
  * Profil aktif non-Kadiv untuk memetakan penerima disposisi ke PIC.
- * Sengaja tanpa nomor telepon (docs/bot-access.md §4).
+ * Hanya token can_propose (KEVIN). Sengaja tanpa nomor telepon (docs/bot-access.md §4).
  */
 export async function GET(request: NextRequest) {
-  const auth = await authorizeBotToken(request)
+  const auth = await authorizeBotProposer(request, '/api/bot/people', 'json')
   if (auth.error || !auth.token) {
     return NextResponse.json({ error: auth.error ?? 'Unauthorized' }, { status: auth.status ?? 401 })
   }

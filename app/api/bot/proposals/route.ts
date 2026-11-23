@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authorizeBotToken, recordBotAccess, type BotTokenRow } from '@/lib/bot-access'
+import { authorizeBotProposer, recordBotAccess, type BotTokenRow } from '@/lib/bot-access'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { parseProposalInput } from '@/lib/proposals'
 import { wibDateStr } from '@/lib/utils'
@@ -12,13 +12,9 @@ const STATUSES: ProposalStatus[] = ['menunggu', 'disetujui', 'ditolak']
 
 // Usulan hanya untuk agent pengusul (KEVIN); bot baca-saja lain tidak melihat judul disposisi
 async function authorizeProposer(request: NextRequest, format: string) {
-  const auth = await authorizeBotToken(request)
+  const auth = await authorizeBotProposer(request, ENDPOINT, format)
   if (auth.error || !auth.token) {
     return { fail: NextResponse.json({ error: auth.error ?? 'Unauthorized' }, { status: auth.status ?? 401 }) }
-  }
-  if (!auth.token.can_propose) {
-    await recordBotAccess(auth.token.id, ENDPOINT, format, false, 'tanpa izin can_propose')
-    return { fail: NextResponse.json({ error: 'Token bot tanpa izin mengusulkan' }, { status: 403 }) }
   }
   return { token: auth.token as BotTokenRow }
 }
