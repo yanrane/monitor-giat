@@ -134,7 +134,29 @@ export interface ProgressItem {
   created_by: string
   created_at: string
   updated_at: string
+  proposal_id?: string | null
   pic?: Profile
+}
+
+export type ProposalStatus = 'menunggu' | 'disetujui' | 'ditolak'
+
+// Usulan item Monitor Progress dari disposisi TEO (migration 018)
+export interface ProgressProposal {
+  id: string
+  teo_ref: string
+  teo_tanggal: string | null
+  perihal: string
+  instruksi: string | null
+  judul: string
+  pic_ids: string[]
+  target_date: string
+  alasan_tenggat: string | null
+  status: ProposalStatus
+  proposed_by_token: string | null
+  decided_by: string | null
+  decided_at: string | null
+  alasan_tolak: string | null
+  created_at: string
 }
 
 export type BudgetType = 'opex' | 'capex'
