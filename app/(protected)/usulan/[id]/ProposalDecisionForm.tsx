@@ -38,13 +38,9 @@ export function ProposalDecisionForm({ id, judul, picIds, targetDate, today, peo
   const border = { border: '1px solid var(--border)' }
 
   return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault()
-        run(approveProposal, e.currentTarget, 'Usulan disetujui — item Monitor Progress dibuat')
-      }}
-    >
+    // Enter / tombol "Go" di HP tidak boleh menyetujui: persetujuan tidak bisa dibatalkan,
+    // jadi hanya klik tombol Setujui yang menjalankannya.
+    <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
       <label className="block space-y-1.5">
         <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Judul pekerjaan</span>
         <input name="title" defaultValue={judul} maxLength={200} required className={field} style={border} />
@@ -79,8 +75,13 @@ export function ProposalDecisionForm({ id, judul, picIds, targetDate, today, peo
         {!rejecting ? (
           <>
             <button
-              type="submit"
+              type="button"
               disabled={pending}
+              onClick={(e) => {
+                const form = e.currentTarget.form!
+                if (!form.reportValidity()) return
+                run(approveProposal, form, 'Usulan disetujui — item Monitor Progress dibuat')
+              }}
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               style={{ background: 'var(--ok)' }}
             >
