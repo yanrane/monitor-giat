@@ -27,7 +27,7 @@ const CONTOH: { input: string; tujuan: string; catatan: string }[] = [
   {
     input: 'Rapat internal / tugas umum lainnya',
     tujuan: 'Log Harian',
-    catatan: 'Pilih "Umum — tidak terkait kegiatan".',
+    catatan: 'Pilih "Umum — administrasi/rapat/di luar kegiatan".',
   },
 ]
 
@@ -51,7 +51,7 @@ const TINGKAT = [
     warna: '#1e7a56',
     bg: '#e9f5ef',
     judul: '3. Log Harian — bukti kerja harian Anda',
-    isi: 'Setiap hari, catat apa yang Anda kerjakan: SATU catatan untuk TIAP kegiatan yang dikerjakan hari itu, pilih kegiatannya di dropdown "Kegiatan utama terkait". Catatan Anda tampil di Monitor Tim dan terkumpul di tab "Log" kegiatan tersebut — inilah yang dilihat pimpinan sebagai rekam jejak kerja harian Anda.',
+    isi: 'Setiap hari, catat apa yang Anda kerjakan: SATU catatan untuk TIAP kegiatan yang dikerjakan hari itu, pilih kegiatannya di dropdown "Kegiatan utama terkait" (WAJIB; kegiatan yang PIC-nya Anda tampil paling atas, "Umum" hanya untuk di luar kegiatan). Catatan Anda tampil di Monitor Tim, terkumpul di tab "Log" kegiatan tersebut, dan muncul sebagai "Log terakhir" di board dashboard — kegiatan yang rutin dilog tidak dianggap diam.',
   },
   {
     icon: CheckSquare,

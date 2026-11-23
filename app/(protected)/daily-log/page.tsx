@@ -17,7 +17,11 @@ function formatDisplayDate(dateStr: string) {
   })
 }
 
-interface ActivityOption { id: string; title: string }
+interface ActivityOption { id: string; title: string; mine: boolean }
+
+// Pilihan eksplisit untuk catatan di luar kegiatan (administrasi, rapat umum, dll.).
+// Kegiatan WAJIB dipilih supaya log jadi jejak progres kegiatan di board dashboard.
+const UMUM = '__umum__'
 
 const inputStyle = {
   background: 'var(--gray-100)',
@@ -53,11 +57,16 @@ export default function DailyLogPage() {
       if (!prof?.dept_id) return
       const { data: acts } = await supabase
         .from('activities')
-        .select('id, title')
+        .select('id, title, pic_id')
         .eq('dept_id', prof.dept_id)
         .neq('status', 'selesai')
         .order('title')
-      setDeptActivities((acts as ActivityOption[]) ?? [])
+      // Kegiatan yang PIC-nya saya sendiri tampil paling atas
+      setDeptActivities(
+        ((acts ?? []) as { id: string; title: string; pic_id: string | null }[])
+          .map((a) => ({ id: a.id, title: a.title, mine: a.pic_id === user.id }))
+          .sort((a, b) => Number(b.mine) - Number(a.mine))
+      )
     }
     loadActivities()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -95,18 +104,19 @@ export default function DailyLogPage() {
     setEditingId(log.id)
     setContent(log.content)
     setLocation(log.location ?? '')
-    setActivityId(log.activity_id ?? '')
+    setActivityId(log.activity_id ?? UMUM)
     setFormOpen(true)
   }
 
   async function handleSave() {
     if (!content.trim()) { toast.error('Isi catatan tidak boleh kosong'); return }
     if (!location.trim()) { toast.error('Lokasi tidak boleh kosong'); return }
+    if (!activityId) { toast.error('Pilih kegiatan utama terkait — atau "Umum" bila memang di luar kegiatan'); return }
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const payload = { content, location: location.trim(), activity_id: activityId || null }
+    const payload = { content, location: location.trim(), activity_id: activityId === UMUM ? null : activityId }
     const { error } = editingId
       ? await supabase.from('daily_logs').update(payload).eq('id', editingId)
       : await supabase.from('daily_logs').insert({ user_id: user.id, log_date: selectedDate, ...payload })
@@ -248,7 +258,7 @@ export default function DailyLogPage() {
               style={{ border: '1px solid var(--cream-border)', boxShadow: '0 2px 8px rgba(11,25,41,0.06)' }}
             >
               <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Kegiatan utama terkait
+                Kegiatan utama terkait <span style={{ color: 'var(--bad)' }}>*</span>
               </label>
               <select
                 value={activityId}
@@ -256,10 +266,20 @@ export default function DailyLogPage() {
                 className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none"
                 style={inputStyle}
               >
-                <option value="">— Umum / tidak terkait kegiatan —</option>
-                {deptActivities.map((a) => (
-                  <option key={a.id} value={a.id}>{a.title}</option>
-                ))}
+                <option value="" disabled>— Pilih kegiatan utama —</option>
+                {deptActivities.some((a) => a.mine) && (
+                  <optgroup label="Kegiatan saya (PIC)">
+                    {deptActivities.filter((a) => a.mine).map((a) => (
+                      <option key={a.id} value={a.id}>{a.title}</option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="Kegiatan departemen">
+                  {deptActivities.filter((a) => !a.mine).map((a) => (
+                    <option key={a.id} value={a.id}>{a.title}</option>
+                  ))}
+                </optgroup>
+                <option value={UMUM}>Umum — administrasi/rapat/di luar kegiatan</option>
               </select>
               <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                 {editingId ? 'Ubah catatan' : 'Apa yang Anda kerjakan?'}
