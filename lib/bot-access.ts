@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { wibDateStr } from '@/lib/utils'
+import { buildAttention, ATTENTION_LABELS, type AttentionReason } from '@/lib/attention'
 
 /**
  * Lapisan akses bot read-only untuk Monitor Giat.
@@ -100,6 +101,7 @@ interface ActivityRow {
   priority: string | null; control_status: string | null
   blocker: string | null; next_action: string | null; next_action_due_date: string | null
   pic_id: string | null; end_date: string; last_substantive_update_at: string | null; updated_at: string
+  decision_needed: string | null
 }
 interface ProgressItemRow {
   id: string; title: string; pic_id: string; target_date: string; status: string; updated_at: string
@@ -120,6 +122,23 @@ export interface BotSummary {
     progres_terlambat: number
     log_hari_ini_sudah: number
     log_hari_ini_belum: number
+  }
+  // Daftar yang sama dengan "Butuh Anda hari ini" di dashboard Kadiv (lib/attention.ts).
+  // Isi teks keputusan (decision_needed) sengaja tidak dikirim — lihat docs/bot-access.md §4.
+  butuh_kadiv_hari_ini: {
+    total: number
+    per_alasan: Record<AttentionReason, number>
+    daftar: Array<{
+      judul: string
+      bidang: string
+      pic: string | null
+      alasan: AttentionReason[]
+      prioritas: string | null
+      langkah_berikutnya: string | null
+      tenggat_langkah: string | null
+      hari_lewat_tenggat: number
+      hari_tanpa_update: number
+    }>
   }
   bidang: Array<{
     nama: string
@@ -197,7 +216,7 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
   const [activities, progressItems, logsToday] = await Promise.all([
     pageAll<ActivityRow>(
       'activities',
-      'id, dept_id, title, status, priority, control_status, blocker, next_action, next_action_due_date, pic_id, end_date, last_substantive_update_at, updated_at',
+      'id, dept_id, title, status, priority, control_status, blocker, next_action, next_action_due_date, pic_id, end_date, last_substantive_update_at, updated_at, decision_needed',
       actFilter
     ),
     pageAll<ProgressItemRow>(
@@ -278,6 +297,8 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
       }
     })
 
+  const attention = buildAttention(activities, today)
+
   const belumLog = scopedPeople.filter((p) => !loggedToday.has(p.id)).map((p) => p.full_name)
   const sudahLog = scopedPeople.filter((p) => loggedToday.has(p.id)).map((p) => p.full_name)
 
@@ -300,6 +321,21 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
       log_hari_ini_sudah: sudahLog.length,
       log_hari_ini_belum: belumLog.length,
     },
+    butuh_kadiv_hari_ini: {
+      total: attention.total,
+      per_alasan: attention.counts,
+      daftar: attention.items.map((e) => ({
+        judul: e.activity.title,
+        bidang: deptName.get(e.activity.dept_id) ?? '-',
+        pic: e.activity.pic_id ? (personName.get(e.activity.pic_id) ?? null) : null,
+        alasan: e.reasons,
+        prioritas: e.activity.priority ?? null,
+        langkah_berikutnya: e.activity.next_action ?? null,
+        tenggat_langkah: e.activity.next_action_due_date ?? null,
+        hari_lewat_tenggat: e.overdueDays,
+        hari_tanpa_update: e.idleDays,
+      })),
+    },
     bidang,
     personel: { belum_log_hari_ini: belumLog, sudah_log_hari_ini: sudahLog },
   }
@@ -318,6 +354,25 @@ export function summaryToText(s: BotSummary): string {
   L.push(
     `- Log harian hari ini: ${s.ringkasan.log_hari_ini_sudah} sudah / ${s.ringkasan.log_hari_ini_belum} belum`
   )
+  L.push('')
+
+  const k = s.butuh_kadiv_hari_ini
+  L.push(`*Butuh Kadiv hari ini* (${k.daftar.length} dari ${k.total})`)
+  if (k.total === 0) L.push('- Tidak ada ✅')
+  k.daftar.forEach((e, i) => {
+    const tag = e.alasan
+      .map((r) =>
+        r === 'lewat_tenggat' ? `lewat tenggat ${e.hari_lewat_tenggat} hari`
+        : r === 'tanpa_update' ? `${e.hari_tanpa_update} hari tanpa update`
+        : ATTENTION_LABELS[r].toLowerCase()
+      )
+      .concat(e.prioritas === 'p1' ? ['P1'] : [])
+      .join(', ')
+    L.push(`${i + 1}. ${e.judul} (${e.bidang}${e.pic ? `, PIC: ${e.pic}` : ''}) — ${tag}`)
+    if (e.langkah_berikutnya) {
+      L.push(`   → ${e.langkah_berikutnya}${e.tenggat_langkah ? ` (tenggat ${e.tenggat_langkah})` : ''}`)
+    }
+  })
   L.push('')
 
   for (const b of s.bidang) {

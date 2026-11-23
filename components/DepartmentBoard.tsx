@@ -104,7 +104,7 @@ export function DepartmentBoard({ department, activities, canAdd = false }: Depa
             <span>Nama Kegiatan</span>
             <span>Status</span>
             <span>PIC</span>
-            <span>Target Selesai</span>
+            <span>Tenggat</span>
             <span>Progress</span>
           </div>
 
@@ -165,7 +165,10 @@ export function DepartmentBoard({ department, activities, canAdd = false }: Depa
 function ProjectRow({ activity, accent }: { activity: Activity; accent: string }) {
   const StatusIcon = STATUS_ICONS[activity.status]
   const dotColor   = STATUS_DOT_COLORS[activity.status]
-  const days       = daysUntil(activity.end_date)
+  // Target utama = tenggat langkah berikutnya; tanggal akhir kegiatan hanya cadangan
+  const dueDate    = activity.next_action_due_date ?? activity.end_date
+  const dueKind    = activity.next_action_due_date ? 'langkah berikutnya' : 'target akhir'
+  const days       = daysUntil(dueDate)
   const isOverdue  = days < 0 && activity.status !== 'selesai'
   const isUrgent   = days >= 0 && days <= 3 && activity.status !== 'selesai'
 
@@ -190,9 +193,15 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
             <p className="text-sm font-medium truncate transition-colors" style={{ color: 'var(--text-primary)' }}>
               {activity.title}
             </p>
-            {(isOverdue || isUrgent) && (
-              <p className="text-xs mt-0.5 font-medium" style={{ color: isOverdue ? '#b3362a' : '#a05c0a' }}>
-                {isOverdue ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi`}
+            {(activity.next_action || isOverdue || isUrgent) && (
+              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
+                {(isOverdue || isUrgent) && (
+                  <span className="font-medium" style={{ color: isOverdue ? '#b3362a' : '#a05c0a' }}>
+                    {isOverdue ? `Terlambat ${Math.abs(days)} hari` : `${days} hari lagi`}
+                    {activity.next_action && ' · '}
+                  </span>
+                )}
+                {activity.next_action && `→ ${activity.next_action}`}
               </p>
             )}
           </div>
@@ -211,9 +220,10 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
           {picName}
         </div>
 
-        {/* Target selesai */}
+        {/* Tenggat: langkah berikutnya, kalau kosong pakai target akhir */}
         <div className="text-xs" style={{ color: isOverdue ? '#b3362a' : 'var(--text-muted)' }}>
-          {formatDate(activity.end_date)}
+          {formatDate(dueDate)}
+          <span className="block text-[10.5px]" style={{ color: 'var(--text-tertiary)' }}>{dueKind}</span>
         </div>
 
         {/* Task progress */}
@@ -248,9 +258,14 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
           <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{activity.title}</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
             <span className="text-xs" style={{ color: dotColor }}>{STATUS_LABELS[activity.status]}</span>
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(activity.end_date)}</span>
+            <span className="text-xs" style={{ color: isOverdue ? '#b3362a' : 'var(--text-muted)' }}>
+              {formatDate(dueDate)} ({dueKind})
+            </span>
             {picName !== '—' && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>PIC: {picName}</span>}
           </div>
+          {activity.next_action && (
+            <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>→ {activity.next_action}</p>
+          )}
           {taskTotal > 0 && (
             <div className="flex items-center gap-2 mt-2">
               <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--cream-dark)' }}>

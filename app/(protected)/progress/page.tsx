@@ -1,14 +1,14 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { type Profile, type ProgressItem } from '@/lib/types'
+import { type Profile, type ProgressItem, DEPT_BG_COLORS } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { ProgressForm } from './ProgressForm'
 import { ProgressToggle, ProgressDelete } from './ProgressRowActions'
 import { EditTargetButton } from './EditTargetButton'
 import { AutoRefresh } from './AutoRefresh'
-import { Collapsible } from '@/components/Collapsible'
-import { TrendingUp, AlertTriangle, CheckCircle2, Clock, MessageCircle } from 'lucide-react'
+import { StatusBattery } from '@/components/StatusBattery'
+import { TrendingUp, AlertTriangle, CheckCircle2, Clock, MessageCircle, ChevronDown } from 'lucide-react'
 
 interface ItemWithPic extends ProgressItem {
   pic: Profile
@@ -59,6 +59,56 @@ function waLink(item: ItemWithPic) {
   return `https://wa.me/${intl}?text=${encodeURIComponent(msg)}`
 }
 
+// Kolom "People" ala monday: avatar inisial berwarna departemen + nama (+ WA untuk Kadiv)
+function PicChip({ m, isKadiv }: { m: ItemWithPic; isKadiv: boolean }) {
+  const name = m.pic?.full_name ?? '—'
+  const color = DEPT_BG_COLORS[m.pic?.departments?.name ?? ''] ?? '#7a8fa8'
+  const initials = name.split(/\s+/).filter((w) => /[a-z]/i.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?'
+
+  return (
+    <div className="flex items-center gap-1.5 min-w-0">
+      <span
+        className="w-6 h-6 rounded-full shrink-0 inline-flex items-center justify-center text-[10px] font-bold"
+        style={{ background: `${color}1a`, color, border: `1px solid ${color}40` }}
+        aria-hidden="true"
+      >
+        {initials}
+      </span>
+      <span className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{name}</span>
+      {isKadiv && (
+        <a
+          href={waLink(m)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 transition-opacity hover:opacity-70"
+          style={{ color: '#25D366' }}
+          title={`Kirim penugasan via WhatsApp ke ${m.pic?.full_name ?? 'PIC'}`}
+        >
+          <MessageCircle size={12} />
+        </a>
+      )}
+    </div>
+  )
+}
+
+// Battery di kaki grup — hanya tampil kalau isi grup campuran status
+function GroupBattery({ groups, today }: { groups: Group[]; today: string }) {
+  const counts = new Map<string, { n: number; color: string }>()
+  for (const g of groups) {
+    const st = groupStatus(g, today)
+    const c = counts.get(st.label) ?? { n: 0, color: st.color }
+    c.n += 1
+    counts.set(st.label, c)
+  }
+  if (counts.size < 2) return null
+
+  return (
+    <div className="mt-2 px-1 max-w-sm">
+      <StatusBattery segments={[...counts].map(([label, c]) => ({ label, ...c }))} />
+    </div>
+  )
+}
+
 function StatCard({ value, label, color, bg, icon, href, active }: {
   value: number; label: string; color: string; bg: string; icon: React.ReactNode
   href: string; active: boolean
@@ -84,9 +134,10 @@ function StatCard({ value, label, color, bg, icon, href, active }: {
   )
 }
 
-function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
-  groups: Group[]; isKadiv: boolean; userId: string; today: string; framed?: boolean
+function GroupsTable({ groups, isKadiv, userId, today, framed = true, accent }: {
+  groups: Group[]; isKadiv: boolean; userId: string; today: string; framed?: boolean; accent?: string
 }) {
+  const edge = accent ? `3px solid ${accent}` : undefined
   const gridCols = isKadiv ? '24px 1fr 200px 110px 110px 130px 68px' : '24px 1fr 200px 110px 110px 130px'
 
   return (
@@ -102,6 +153,7 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
           color: 'var(--text-muted)',
           background: 'var(--surface)',
           borderBottom: '1px solid var(--cream-border)',
+          borderLeft: accent ? '3px solid transparent' : undefined,
         }}
       >
         <span />
@@ -128,7 +180,7 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
             <div
               key={ids[0]}
               className="px-4 py-3 flex flex-col gap-2 sm:grid sm:items-center sm:gap-3"
-              style={{ gridTemplateColumns: gridCols, background: allDone ? 'var(--surface-2)' : 'white' }}
+              style={{ gridTemplateColumns: gridCols, background: allDone ? 'var(--surface-2)' : 'white', borderLeft: edge }}
             >
               <div className="flex items-center gap-2.5 sm:contents">
                 <ProgressToggle
@@ -148,25 +200,7 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
 
                 {/* PIC — semua nama digabung satu kolom (kerja tim, selesai bersama) */}
                 <div className="hidden sm:flex flex-col gap-1 min-w-0">
-                  {group.members.map((m) => (
-                    <div key={m.id} className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                        {m.pic?.full_name ?? '—'}
-                      </span>
-                      {isKadiv && (
-                        <a
-                          href={waLink(m)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 transition-opacity hover:opacity-70"
-                          style={{ color: '#25D366' }}
-                          title={`Kirim penugasan via WhatsApp ke ${m.pic?.full_name ?? 'PIC'}`}
-                        >
-                          <MessageCircle size={12} />
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                  {group.members.map((m) => <PicChip key={m.id} m={m} isKadiv={isKadiv} />)}
                 </div>
 
                 <p className="hidden sm:block text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -205,24 +239,7 @@ function GroupsTable({ groups, isKadiv, userId, today, framed = true }: {
                     {allDone && latestDone && ` · Selesai ${formatDate(latestDone)}`}
                   </span>
                 </div>
-                {group.members.map((m) => (
-                  <div key={m.id} className="flex items-center gap-1.5">
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {m.pic?.full_name ?? '—'}
-                    </span>
-                    {isKadiv && (
-                      <a
-                        href={waLink(m)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#25D366' }}
-                        title={`Kirim penugasan via WhatsApp ke ${m.pic?.full_name ?? 'PIC'}`}
-                      >
-                        <MessageCircle size={12} />
-                      </a>
-                    )}
-                  </div>
-                ))}
+                {group.members.map((m) => <PicChip key={m.id} m={m} isKadiv={isKadiv} />)}
               </div>
             </div>
           )
@@ -296,8 +313,16 @@ export default async function ProgressPage({ searchParams }: {
   const rawFilter = (await searchParams).filter
   const filter: FilterKey | null = rawFilter && rawFilter in FILTERS ? rawFilter as FilterKey : null
 
-  const activeGroups = [...overdue, ...running]
   const doneGroups = [...onTime, ...lateDone]
+
+  // Grup ala board monday.com — dibagi otomatis menurut tenggat, grup kosong disembunyikan
+  const weekEnd = new Date(new Date(`${today}T00:00:00Z`).getTime() + 6 * 86400000).toISOString().slice(0, 10)
+  const boardGroups = [
+    { key: 'melewati', title: 'Melewati target', accent: 'var(--bad)', groups: overdue, open: true },
+    { key: 'pekan', title: '7 hari ke depan', accent: 'var(--run)', groups: running.filter((g) => g.target_date <= weekEnd), open: true },
+    { key: 'nanti', title: 'Berikutnya', accent: '#7a8fa8', groups: running.filter((g) => g.target_date > weekEnd), open: true },
+    { key: 'selesai', title: 'Selesai', accent: 'var(--ok)', groups: doneGroups, open: false },
+  ].filter((b) => b.groups.length > 0)
 
   // Daftar PIC untuk form — hanya dipakai kalau kadiv
   const people: Profile[] = isKadiv ? ((peopleRaw ?? []) as unknown as Profile[]) : []
@@ -353,14 +378,25 @@ export default async function ProgressPage({ searchParams }: {
           <GroupsTable groups={byFilter[filter]} isKadiv={isKadiv} userId={user.id} today={today} />
         </div>
       ) : (
-        <>
-          <GroupsTable groups={activeGroups} isKadiv={isKadiv} userId={user.id} today={today} />
-          {doneGroups.length > 0 && (
-            <Collapsible title={`Selesai (${doneGroups.length})`}>
-              <GroupsTable groups={doneGroups} isKadiv={isKadiv} userId={user.id} today={today} framed={false} />
-            </Collapsible>
-          )}
-        </>
+        <div className="space-y-5">
+          {boardGroups.map((b) => (
+            <details key={b.key} open={b.open || undefined} className="group/board">
+              <summary className="flex items-center gap-2 mb-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+                <ChevronDown
+                  size={16}
+                  className="shrink-0 transition-transform -rotate-90 group-open/board:rotate-0"
+                  style={{ color: b.accent }}
+                />
+                <span className="text-sm font-bold" style={{ color: b.accent }}>{b.title}</span>
+                <span className="text-xs tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                  {b.groups.length} pekerjaan
+                </span>
+              </summary>
+              <GroupsTable groups={b.groups} accent={b.accent} isKadiv={isKadiv} userId={user.id} today={today} />
+              <GroupBattery groups={b.groups} today={today} />
+            </details>
+          ))}
+        </div>
       )}
     </div>
   )
