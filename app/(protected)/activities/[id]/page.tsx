@@ -15,8 +15,16 @@ import { formatDate, formatDateTime } from '@/lib/utils'
 import { ArrowLeft, Pencil, CalendarDays, FileText, MapPin, User, UserCheck } from 'lucide-react'
 import { DeleteActivityButton } from './DeleteActivityButton'
 
-export default async function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
+const TABS = ['tasks', 'logs', 'detail', 'comments', 'attachments'] as const
+
+export default async function ActivityDetailPage({ params, searchParams }: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ tab?: string }>
+}) {
   const { id } = await params
+  // ?tab=logs dari board dashboard → langsung buka log harian terkait
+  const requestedTab = (await searchParams).tab
+  const initialTab = TABS.includes(requestedTab as (typeof TABS)[number]) ? requestedTab! : 'tasks'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -129,7 +137,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
       <DecisionHistory decisions={(decisions as ActivityDecision[]) ?? []} />
 
       {/* Tabs */}
-      <Tabs defaultValue="tasks">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="w-full">
           <TabsTrigger value="tasks" className="flex-1">
             Pekerjaan

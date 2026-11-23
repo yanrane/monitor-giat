@@ -57,6 +57,7 @@ export interface Activity {
   pic?: Profile
   last_updater?: Profile
   tasks?: Pick<Task, 'id' | 'status'>[]
+  last_log_date?: string | null // turunan: log harian terkait terbaru (dashboard/bot), bukan kolom DB
 }
 
 export type DecisionAction =

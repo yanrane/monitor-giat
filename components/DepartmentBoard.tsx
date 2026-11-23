@@ -5,12 +5,19 @@ import Link from 'next/link'
 import { ChevronDown, ChevronRight, Plus, CheckCircle2, Circle, Clock, PauseCircle } from 'lucide-react'
 import { type Department, type Activity, DEPT_BG_COLORS, STATUS_LABELS } from '@/lib/types'
 import { formatDate, daysUntil } from '@/lib/utils'
+import { logFreshness, type LogStat, type LogFreshness } from '@/lib/attention'
 
 interface DepartmentBoardProps {
   department: Department
   activities: Activity[]
   canAdd?: boolean
+  logStats?: Record<string, LogStat> // log harian terkait per kegiatan (jejak progres)
+  today?: string                     // WIB, dari server
 }
+
+const FRESH_COLOR: Record<LogFreshness, string> = { baru: 'var(--ok)', sedang: 'var(--warn)', lama: 'var(--bad)' }
+const shortDate = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+const firstName = (n: string | null) => (n ?? '').split(/\s+/)[0] || '—'
 
 const STATUS_ICONS = {
   belum_mulai: Circle,
@@ -26,7 +33,7 @@ const STATUS_DOT_COLORS = {
   ditunda: '#b3362a',
 }
 
-export function DepartmentBoard({ department, activities, canAdd = false }: DepartmentBoardProps) {
+export function DepartmentBoard({ department, activities, canAdd = false, logStats, today }: DepartmentBoardProps) {
   const [collapsed, setCollapsed] = useState(false)
   const accent = DEPT_BG_COLORS[department.name] ?? '#7a8fa8'
 
@@ -105,7 +112,7 @@ export function DepartmentBoard({ department, activities, canAdd = false }: Depa
             <span>Status</span>
             <span>PIC</span>
             <span>Tenggat</span>
-            <span>Progress</span>
+            <span>Log terakhir</span>
           </div>
 
           {/* Rows — kegiatan aktif tampil langsung, selesai dilipat */}
@@ -118,7 +125,7 @@ export function DepartmentBoard({ department, activities, canAdd = false }: Depa
               activities
                 .filter((a) => a.status !== 'selesai')
                 .map((activity) => (
-                  <ProjectRow key={activity.id} activity={activity} accent={accent} />
+                  <ProjectRow key={activity.id} activity={activity} accent={accent} log={logStats?.[activity.id]} today={today} />
                 ))
             )}
           </div>
@@ -135,7 +142,7 @@ export function DepartmentBoard({ department, activities, canAdd = false }: Depa
                 {activities
                   .filter((a) => a.status === 'selesai')
                   .map((activity) => (
-                    <ProjectRow key={activity.id} activity={activity} accent={accent} />
+                    <ProjectRow key={activity.id} activity={activity} accent={accent} log={logStats?.[activity.id]} today={today} />
                   ))}
               </div>
             </details>
@@ -162,7 +169,8 @@ export function DepartmentBoard({ department, activities, canAdd = false }: Depa
   )
 }
 
-function ProjectRow({ activity, accent }: { activity: Activity; accent: string }) {
+function ProjectRow({ activity, accent, log, today }: { activity: Activity; accent: string; log?: LogStat; today?: string }) {
+  const fresh = log && today ? logFreshness(log.lastDate, today) : null
   const StatusIcon = STATUS_ICONS[activity.status]
   const dotColor   = STATUS_DOT_COLORS[activity.status]
   // Target utama = tenggat langkah berikutnya; tanggal akhir kegiatan hanya cadangan
@@ -180,7 +188,10 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
   const picName    = activity.pic?.full_name ?? '—'
 
   return (
-    <Link href={`/activities/${activity.id}`}>
+    <Link
+      href={`/activities/${activity.id}${log ? '?tab=logs' : ''}`}
+      title={log ? `Log terakhir — ${log.lastBy ?? ''}: ${log.lastContent}` : undefined}
+    >
       {/* Desktop row */}
       <div
         className="hidden sm:grid items-center px-4 py-3 hover:bg-[--surface-2] transition-colors cursor-pointer group"
@@ -226,7 +237,18 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
           <span className="block text-[10.5px]" style={{ color: 'var(--text-tertiary)' }}>{dueKind}</span>
         </div>
 
-        {/* Task progress */}
+        {/* Progres = log harian terkait terakhir (+ sub-tugas bila ada) */}
+        <div className="min-w-0">
+          {log ? (
+            <>
+              <p className="text-xs font-semibold tabular-nums truncate" style={{ color: fresh ? FRESH_COLOR[fresh] : 'var(--text-secondary)' }}>
+                {shortDate(log.lastDate)} · {firstName(log.lastBy)}
+              </p>
+              <p className="text-[10.5px] tabular-nums" style={{ color: 'var(--text-tertiary)' }}>
+                {log.count} log{taskTotal > 0 ? ` · ${taskDone}/${taskTotal} tugas` : ''}
+              </p>
+            </>
+          ) : (
         <div className="flex items-center gap-2">
           {taskTotal > 0 ? (
             <>
@@ -244,7 +266,9 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
               </span>
             </>
           ) : (
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>belum ada log</span>
+          )}
+        </div>
           )}
         </div>
       </div>
@@ -265,6 +289,14 @@ function ProjectRow({ activity, accent }: { activity: Activity; accent: string }
           </div>
           {activity.next_action && (
             <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>→ {activity.next_action}</p>
+          )}
+          {log && (
+            <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-muted)' }}>
+              <span className="font-semibold" style={{ color: fresh ? FRESH_COLOR[fresh] : undefined }}>
+                Log {shortDate(log.lastDate)} · {firstName(log.lastBy)}
+              </span>
+              {' — '}{log.lastContent}
+            </p>
           )}
           {taskTotal > 0 && (
             <div className="flex items-center gap-2 mt-2">

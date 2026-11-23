@@ -8,7 +8,7 @@ import { type Activity, type Department, type Task, type ProgressItem, type Prog
 import { StatusBattery, BatteryLegend, type BatterySegment } from '@/components/StatusBattery'
 import { AlertTriangle, CalendarClock, Building2, Users, Target, CircleCheck, ChevronDown } from 'lucide-react'
 import { formatDate, daysSinceWIB, staleLevel, wibDateStr } from '@/lib/utils'
-import { buildAttention, ATTENTION_LABELS, type AttentionEntry, type AttentionReason } from '@/lib/attention'
+import { buildAttention, summarizeLogs, lastTouchDate, ATTENTION_LABELS, type AttentionEntry, type AttentionReason } from '@/lib/attention'
 
 const REASON_STYLE: Record<AttentionReason, { color: string; bg: string }> = {
   keputusan:     { color: '#6d4fc4',     bg: '#f3ebfb' },
@@ -151,6 +151,7 @@ export default async function DashboardPage() {
     { data: tasks },
     { data: openProgressRaw },
     { data: proposalsRaw },
+    { data: logRowsRaw },
   ] = await Promise.all([
     supabase.from('departments').select('*').order('sort_order'),
     supabase
@@ -173,10 +174,24 @@ export default async function DashboardPage() {
       .select('id, teo_ref, perihal, judul, pic_ids, target_date')
       .eq('status', 'menunggu')
       .order('created_at', { ascending: true }),
+    // Log harian terkait kegiatan = jejak progres board (60 hari; urutan penting untuk summarizeLogs)
+    // ponytail: PostgREST maks 1000 baris → bila >1000 log terkait/60 hari, hitungan "N log" terpotong (log terakhir tetap benar)
+    supabase
+      .from('daily_logs')
+      .select('activity_id, log_date, content, profiles(full_name)')
+      .not('activity_id', 'is', null)
+      .gte('log_date', wibDateStr(new Date(Date.now() - 60 * 86400000)))
+      .order('log_date', { ascending: false })
+      .order('created_at', { ascending: false }),
   ])
 
   const depts   = (departments as Department[]) ?? []
-  const acts    = (activities as Activity[]) ?? []
+  const logStats = summarizeLogs(
+    ((logRowsRaw ?? []) as unknown as { activity_id: string; log_date: string; content: string; profiles: { full_name: string } | null }[])
+      .map((r) => ({ activity_id: r.activity_id, log_date: r.log_date, content: r.content, author: r.profiles?.full_name ?? null }))
+  )
+  // Log terkait ikut dihitung sebagai "disentuh" → kegiatan yang rajin dilog tidak dianggap diam
+  const acts: Activity[] = ((activities as Activity[]) ?? []).map((a) => ({ ...a, last_log_date: logStats[a.id]?.lastDate ?? null }))
   const pending = (tasks ?? []) as TaskWithActivity[]
 
   const actsByDept = (deptId: string) => acts.filter((a) => a.dept_id === deptId)
@@ -237,8 +252,8 @@ export default async function DashboardPage() {
     .filter(isOpen)
     .map((a) => ({
       activity: a,
-      days: daysSinceWIB(a.last_substantive_update_at ?? a.updated_at),
-      level: staleLevel(daysSinceWIB(a.last_substantive_update_at ?? a.updated_at)),
+      days: daysSinceWIB(lastTouchDate(a.last_substantive_update_at ?? a.updated_at, a.last_log_date)),
+      level: staleLevel(daysSinceWIB(lastTouchDate(a.last_substantive_update_at ?? a.updated_at, a.last_log_date))),
     }))
     .filter((i): i is StaleActivity => i.level !== 'ok')
     .sort((a, b) => b.days - a.days)
@@ -630,6 +645,8 @@ export default async function DashboardPage() {
             department={dept}
             activities={actsByDept(dept.id)}
             canAdd={false}
+            logStats={logStats}
+            today={today}
           />
         ))}
       </div>

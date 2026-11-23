@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { wibDateStr } from '@/lib/utils'
-import { buildAttention, kadivBriefingLines, type AttentionReason } from '@/lib/attention'
+import { buildAttention, kadivBriefingLines, lastTouchDate, type AttentionReason } from '@/lib/attention'
 
 /**
  * Lapisan akses bot read-only untuk Monitor Giat.
@@ -232,7 +232,7 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
   const isDeptScoped = token.scope === 'dept' && token.dept_id
   const actFilter = (q: any) => (isDeptScoped ? q.eq('dept_id', token.dept_id as string) : q)
 
-  const [activities, progressItems, logsToday] = await Promise.all([
+  const [activitiesRaw, progressItems, logsToday, linkedLogs] = await Promise.all([
     pageAll<ActivityRow>(
       'activities',
       'id, dept_id, title, status, priority, control_status, blocker, next_action, next_action_due_date, pic_id, end_date, last_substantive_update_at, updated_at, decision_needed',
@@ -251,7 +251,19 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
       'user_id, log_date, created_at',
       (q: any) => q.eq('log_date', today)
     ),
+    // Log harian terkait kegiatan (60 hari) = jejak progres → ikut menentukan "hari tanpa update"
+    pageAll<{ activity_id: string; log_date: string }>(
+      'daily_logs',
+      'activity_id, log_date',
+      (q: any) => q.not('activity_id', 'is', null).gte('log_date', wibDateStr(new Date(Date.now() - 60 * 86400000)))
+    ),
   ])
+
+  const lastLog = new Map<string, string>()
+  for (const l of linkedLogs) {
+    if ((lastLog.get(l.activity_id) ?? '') < l.log_date) lastLog.set(l.activity_id, l.log_date)
+  }
+  const activities = activitiesRaw.map((a) => ({ ...a, last_log_date: lastLog.get(a.id) ?? null }))
 
   const open = activities.filter((a) => a.status !== 'selesai')
   const doneActivities = activities.filter((a) => a.status === 'selesai')
@@ -277,7 +289,7 @@ export async function buildBotSummary(token: BotTokenRow): Promise<BotSummary> {
         )
         .map((a) => {
           const ref = a.last_substantive_update_at ?? a.updated_at
-          const days = ref ? daysBetween(wibDateStr(ref), today) : null
+          const days = ref ? daysBetween(lastTouchDate(ref, a.last_log_date), today) : null
           return {
             judul: a.title,
             pic: a.pic_id ? (personName.get(a.pic_id) ?? null) : null,
@@ -424,6 +436,6 @@ export function summaryToText(s: BotSummary): string {
   L.push('*Log harian belum masuk hari ini*')
   L.push(s.personel.belum_log_hari_ini.length ? s.personel.belum_log_hari_ini.join(', ') : 'Semua sudah mengisi ✅')
   L.push('')
-  L.push('_Catatan: `hari tanpa update` berarti rekor di aplikasi belum diperbarui, bukan bukti PIC tidak bekerja._')
+  L.push('_Catatan: `hari tanpa update` berarti tidak ada update kendali maupun log harian terkait di aplikasi, bukan bukti PIC tidak bekerja._')
   return L.join('\n')
 }
