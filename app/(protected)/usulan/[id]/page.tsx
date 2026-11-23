@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -59,6 +60,9 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-2xl space-y-4">
+      <Link href="/usulan" className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--navy-600)' }}>
+        ← Semua usulan
+      </Link>
       <div>
         <p className="text-xs font-bold tracking-wide" style={{ color: 'var(--text-muted)' }}>USULAN TARGET DARI DISPOSISI TEO</p>
         <h1 className="font-serif leading-tight mt-1" style={{ fontSize: '24px', color: 'var(--navy-900)' }}>{p.judul}</h1>
