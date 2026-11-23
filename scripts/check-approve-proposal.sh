@@ -13,6 +13,6 @@ pg_ctl -D "$TMP/db" -o "-p $PORT -k $TMP -c listen_addresses=''" -l "$TMP/log" -
 
 run() { psql -h "$TMP" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q -f "$1"; }
 run "$ROOT/supabase/tests/supabase-stub.sql"
-for m in 005_progress_items 017_bot_access 018_progress_proposals; do run "$ROOT/supabase/migrations/$m.sql"; done
+for m in 005_progress_items 017_bot_access 018_progress_proposals 018_progress_proposals; do run "$ROOT/supabase/migrations/$m.sql"; done  # 018 dua kali: harus bisa dijalankan ulang
 run "$ROOT/supabase/tests/approve_proposal.test.sql"
 echo "check-approve-proposal: OK"

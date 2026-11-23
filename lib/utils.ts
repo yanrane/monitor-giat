@@ -13,8 +13,10 @@ export function formatDate(dateStr: string) {
   })
 }
 
+// Selalu WIB — di server (Vercel, UTC) tanpa timeZone jamnya mundur 7 jam
 export function formatDateTime(dateStr: string) {
   return new Date(dateStr).toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta',
     day: 'numeric',
     month: 'short',
     year: 'numeric',

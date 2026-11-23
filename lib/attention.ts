@@ -70,3 +70,41 @@ export function buildAttention<T extends AttentionInput>(activities: T[], today:
 
   return { items: all.slice(0, limit), total: all.length, counts }
 }
+
+// Bagian "Butuh Kadiv hari ini" di ringkasan teks bot (/api/bot/summary?format=text)
+export interface KadivBriefing {
+  total: number
+  usulan_menunggu: number
+  daftar: Array<{
+    judul: string
+    bidang: string
+    pic: string | null
+    alasan: AttentionReason[]
+    prioritas: string | null
+    langkah_berikutnya: string | null
+    tenggat_langkah: string | null
+    hari_lewat_tenggat: number
+    hari_tanpa_update: number
+  }>
+}
+
+export function kadivBriefingLines(k: KadivBriefing): string[] {
+  const L = [`*Butuh Kadiv hari ini* (${k.daftar.length} dari ${k.total})`]
+  if (k.usulan_menunggu > 0) L.push(`- Usulan target menunggu Kadiv: ${k.usulan_menunggu}`)
+  if (k.total === 0 && k.usulan_menunggu === 0) L.push('- Tidak ada ✅')
+  k.daftar.forEach((e, i) => {
+    const tag = e.alasan
+      .map((r) =>
+        r === 'lewat_tenggat' ? `lewat tenggat ${e.hari_lewat_tenggat} hari`
+        : r === 'tanpa_update' ? `${e.hari_tanpa_update} hari tanpa update`
+        : ATTENTION_LABELS[r].toLowerCase()
+      )
+      .concat(e.prioritas === 'p1' ? ['P1'] : [])
+      .join(', ')
+    L.push(`${i + 1}. ${e.judul} (${e.bidang}${e.pic ? `, PIC: ${e.pic}` : ''}) — ${tag}`)
+    if (e.langkah_berikutnya) {
+      L.push(`   → ${e.langkah_berikutnya}${e.tenggat_langkah ? ` (tenggat ${e.tenggat_langkah})` : ''}`)
+    }
+  })
+  return L
+}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authorizeBotProposer, recordBotAccess, type BotTokenRow } from '@/lib/bot-access'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { parseProposalInput, parseTeoRef } from '@/lib/proposals'
+import { isIsoDate, parseProposalInput, parseTeoRef } from '@/lib/proposals'
 import { wibDateStr } from '@/lib/utils'
 import type { ProposalStatus } from '@/lib/types'
 
@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/bot/proposals?status=menunggu|disetujui|ditolak&sejak=YYYY-MM-DD
+ * GET /api/bot/proposals?status=menunggu|disetujui|ditolak&sejak=YYYY-MM-DD&diputus_sejak=YYYY-MM-DD
+ * (sejak = tanggal usulan dibuat; diputus_sejak = tanggal Kadiv memutus, urut terbaru)
  * Keputusan Kadiv atas usulan, supaya KEVIN tahu kapan mengirim penugasan ke PIC.
  */
 export async function GET(request: NextRequest) {
@@ -102,21 +103,26 @@ export async function GET(request: NextRequest) {
   const params = new URL(request.url).searchParams
   const status = params.get('status')
   const sejak = params.get('sejak')
+  // diputus_sejak: untuk KEVIN mengambil keputusan baru — usulan lama yang baru diputus tetap terambil
+  const diputusSejak = params.get('diputus_sejak')
   if (status && !STATUSES.includes(status as ProposalStatus)) {
     return NextResponse.json({ error: `status harus salah satu dari ${STATUSES.join(', ')}` }, { status: 400 })
   }
-  if (sejak && !/^\d{4}-\d{2}-\d{2}$/.test(sejak)) {
-    return NextResponse.json({ error: 'sejak harus YYYY-MM-DD' }, { status: 400 })
+  for (const [name, value] of [['sejak', sejak], ['diputus_sejak', diputusSejak]] as const) {
+    if (value && !isIsoDate(value)) {
+      return NextResponse.json({ error: `${name} harus tanggal YYYY-MM-DD yang valid` }, { status: 400 })
+    }
   }
 
   const admin = createAdminClient()
   let query = admin
     .from('progress_proposals')
     .select('id, teo_ref, status, judul, pic_ids, target_date, decided_at, alasan_tolak, created_at')
-    .order('created_at', { ascending: false })
+    .order(diputusSejak ? 'decided_at' : 'created_at', { ascending: false })
     .limit(100)
   if (status) query = query.eq('status', status)
   if (sejak) query = query.gte('created_at', `${sejak}T00:00:00+07:00`)
+  if (diputusSejak) query = query.gte('decided_at', `${diputusSejak}T00:00:00+07:00`)
 
   const { data, error } = await query
   if (error) {

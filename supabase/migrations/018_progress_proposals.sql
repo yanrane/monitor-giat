@@ -32,6 +32,9 @@ ALTER TABLE progress_proposals ENABLE ROW LEVEL SECURITY;
 
 -- Hanya Kadiv yang bisa melihat dan memutus usulan.
 -- Tanpa policy INSERT/DELETE: insert hanya lewat API bot (service_role).
+-- DROP ... IF EXISTS supaya file ini aman dijalankan ulang.
+DROP POLICY IF EXISTS "proposals_select_kadiv" ON progress_proposals;
+DROP POLICY IF EXISTS "proposals_update_kadiv" ON progress_proposals;
 CREATE POLICY "proposals_select_kadiv" ON progress_proposals
   FOR SELECT USING (get_my_role() = 'kadiv');
 

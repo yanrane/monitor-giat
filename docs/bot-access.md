@@ -76,7 +76,7 @@ update bot_tokens set can_propose = true where label = '<label token KEVIN>';
 |---|---|
 | `GET /api/bot/people` | `[{id, nama, bidang}]` profil aktif non-Kadiv untuk memetakan penerima disposisi |
 | `POST /api/bot/proposals` | Kirim usulan; respons `{id, status, url}` — `url` dikirim ke WA Kadiv |
-| `GET /api/bot/proposals?status=&sejak=YYYY-MM-DD` | Keputusan Kadiv (judul akhir, PIC, tenggat akhir, alasan tolak) |
+| `GET /api/bot/proposals?status=&sejak=YYYY-MM-DD&diputus_sejak=YYYY-MM-DD` | Keputusan Kadiv (judul akhir, PIC, tenggat akhir, alasan tolak). `sejak` = tanggal usulan dibuat; **`diputus_sejak`** = tanggal Kadiv memutus (urut terbaru) — pakai ini untuk mengambil persetujuan baru, termasuk atas usulan lama |
 
 Ketiganya menolak token tanpa `can_propose` (403).
 
@@ -98,8 +98,10 @@ Body `POST` (JSON):
 Aturan:
 
 - Wajib: `teo_ref` (≤100), `perihal` (≤300), `judul` (≤200), `pic_ids` (≥1, profil aktif non-Kadiv), `target_date` (hari ini s.d. +365 hari, WIB).
-- Opsional: `teo_tanggal`, `instruksi` (≤1000), `alasan_tenggat` (≤300).
+- Opsional: `teo_tanggal` (string kosong = tidak ada), `instruksi` (≤1000), `alasan_tenggat` (≤300).
+- Teks tidak boleh mengandung karakter NUL; tanggal harus tanggal kalender valid (1900–2100).
 - **Idempoten per `teo_ref`**: kirim ulang → `200` dengan usulan yang sudah ada; isinya tidak ditimpa.
+  `teo_ref` dinormalisasi (huruf besar, spasi ganda dirapikan): `nd  123/2026` = `ND 123/2026`.
   Usulan baru → `201`. Validasi gagal → `400 {errors: [...]}`.
 - `/api/bot/summary` kini memuat `butuh_kadiv_hari_ini.usulan_menunggu` dan `teo_ref` di tiap
   entri `progres_terlambat` (null untuk item manual) — dipakai KEVIN untuk teguran WA ke PIC.

@@ -14,15 +14,26 @@ export interface ProposalInput {
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/
-const isRealDate = (s: string) => {
+
+// Tanggal kalender nyata (bukan 2026-13-01) dalam rentang yang aman untuk Postgres
+export function isIsoDate(s: string): boolean {
   if (!DATE.test(s)) return false
+  const year = Number(s.slice(0, 4))
+  if (year < 1900 || year > 2100) return false
   const t = Date.parse(`${s}T00:00:00Z`) // NaN untuk bulan/hari mustahil; jangan toISOString() pada NaN
   return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === s
 }
-const optionalText = (max: number) =>
-  z.string().trim().max(max, `maksimal ${max} karakter`).nullish().transform((v) => v || null)
 
-const teoRef = z.string().trim().min(1, 'wajib diisi').max(100, 'maksimal 100 karakter')
+// Postgres menolak karakter NUL di kolom text → tolak di sini supaya jadi 400, bukan 500
+const noNul = (s: string) => !s.includes('\u0000')
+const NUL_MSG = 'karakter tidak valid'
+const requiredText = (max: number) =>
+  z.string().trim().min(1, 'wajib diisi').max(max, `maksimal ${max} karakter`).refine(noNul, NUL_MSG)
+const optionalText = (max: number) =>
+  z.string().trim().max(max, `maksimal ${max} karakter`).refine(noNul, NUL_MSG).nullish().transform((v) => v || null)
+
+// teo_ref dinormalisasi (spasi dirapikan, huruf besar): "nd  123/2026" dan "ND 123/2026" = usulan yang sama
+const teoRef = requiredText(100).transform((s) => s.replace(/\s+/g, ' ').toUpperCase())
 
 // Dibaca sebelum validasi penuh: usulan yang sudah ada dijawab apa adanya (spec §6.2),
 // walau isi kiriman ulang kini tak lagi valid (tenggat lewat, PIC nonaktif).
@@ -33,12 +44,14 @@ export function parseTeoRef(body: unknown): string | null {
 
 const schema = z.object({
   teo_ref: teoRef,
-  teo_tanggal: z.string().refine(isRealDate, 'format YYYY-MM-DD').nullish().transform((v) => v ?? null),
-  perihal: z.string().trim().min(1, 'wajib diisi').max(300, 'maksimal 300 karakter'),
+  // "" = kosong, sama seperti field opsional lain
+  teo_tanggal: z.string().refine((s) => s === '' || isIsoDate(s), 'format YYYY-MM-DD')
+    .nullish().transform((v) => v || null),
+  perihal: requiredText(300),
   instruksi: optionalText(1000),
-  judul: z.string().trim().min(1, 'wajib diisi').max(200, 'maksimal 200 karakter'),
+  judul: requiredText(200),
   pic_ids: z.array(z.uuid('bukan UUID')).min(1, 'minimal 1 PIC'),
-  target_date: z.string().refine(isRealDate, 'format YYYY-MM-DD'),
+  target_date: z.string().refine(isIsoDate, 'format YYYY-MM-DD'),
   alasan_tenggat: optionalText(300),
 })
 

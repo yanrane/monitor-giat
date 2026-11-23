@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { wibDateStr } from '@/lib/utils'
-import { buildAttention, ATTENTION_LABELS, type AttentionReason } from '@/lib/attention'
+import { buildAttention, kadivBriefingLines, type AttentionReason } from '@/lib/attention'
 
 /**
  * Lapisan akses bot read-only untuk Monitor Giat.
@@ -65,7 +65,10 @@ export async function authorizeBotToken(request: Request): Promise<BotAuthResult
     .eq('token_hash', hashToken(raw))
     .maybeSingle()
 
-  if (error || !data) return { error: 'Token bot tidak dikenal', status: 401 }
+  // Error database (mis. kolom belum ada karena migration tertinggal) ≠ token salah:
+  // jangan disamarkan jadi 401 seolah token dicabut
+  if (error) return { error: `Gagal memeriksa token bot: ${error.message}`, status: 500 }
+  if (!data) return { error: 'Token bot tidak dikenal', status: 401 }
   if (!data.is_active) return { error: 'Token bot sudah dicabut', status: 403 }
   if (!data.can_read) return { error: 'Token bot tanpa izin baca', status: 403 }
 
@@ -384,24 +387,7 @@ export function summaryToText(s: BotSummary): string {
   )
   L.push('')
 
-  const k = s.butuh_kadiv_hari_ini
-  L.push(`*Butuh Kadiv hari ini* (${k.daftar.length} dari ${k.total})`)
-  if (k.usulan_menunggu > 0) L.push(`- Usulan target menunggu Kadiv: ${k.usulan_menunggu}`)
-  if (k.total === 0) L.push('- Tidak ada ✅')
-  k.daftar.forEach((e, i) => {
-    const tag = e.alasan
-      .map((r) =>
-        r === 'lewat_tenggat' ? `lewat tenggat ${e.hari_lewat_tenggat} hari`
-        : r === 'tanpa_update' ? `${e.hari_tanpa_update} hari tanpa update`
-        : ATTENTION_LABELS[r].toLowerCase()
-      )
-      .concat(e.prioritas === 'p1' ? ['P1'] : [])
-      .join(', ')
-    L.push(`${i + 1}. ${e.judul} (${e.bidang}${e.pic ? `, PIC: ${e.pic}` : ''}) — ${tag}`)
-    if (e.langkah_berikutnya) {
-      L.push(`   → ${e.langkah_berikutnya}${e.tenggat_langkah ? ` (tenggat ${e.tenggat_langkah})` : ''}`)
-    }
-  })
+  L.push(...kadivBriefingLines(s.butuh_kadiv_hari_ini))
   L.push('')
 
   for (const b of s.bidang) {
