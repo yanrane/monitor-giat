@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
+import { createProgressItems } from './create-items'
 
 // RLS di tabel progress_items yang menegakkan izin:
 // insert/delete = kadiv, update = kadiv atau PIC.
@@ -18,28 +19,7 @@ export async function addProgressItem(formData: FormData) {
   const targetDate = String(formData.get('target_date') ?? '')
   if (!title || picIds.length === 0 || !targetDate) return
 
-  // Multi-PIC = satu baris per orang, biar ketepatan waktu terukur per PIC
-  const { error } = await supabase.from('progress_items').insert(
-    picIds.map((picId) => ({
-      title,
-      pic_id: picId,
-      target_date: targetDate,
-      created_by: user.id,
-    }))
-  )
-
-  // Notifikasi lonceng ke tiap PIC (insert notifications hanya bisa via service_role).
-  // Gagal notif tidak boleh menggagalkan penambahan item.
-  if (!error && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    await createAdminClient().from('notifications').insert(
-      picIds.map((picId) => ({
-        user_id: picId,
-        title: 'Tugas baru dari Kepala Divisi',
-        message: `Anda ditugaskan: ${title} — target selesai ${formatDate(targetDate)}. Cek menu Monitor Progress.`,
-        type: 'status_change',
-      }))
-    )
-  }
+  await createProgressItems(supabase, { title, picIds, targetDate, createdBy: user.id })
 
   revalidatePath('/progress')
 }
