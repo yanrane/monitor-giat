@@ -22,8 +22,17 @@ const isRealDate = (s: string) => {
 const optionalText = (max: number) =>
   z.string().trim().max(max, `maksimal ${max} karakter`).nullish().transform((v) => v || null)
 
+const teoRef = z.string().trim().min(1, 'wajib diisi').max(100, 'maksimal 100 karakter')
+
+// Dibaca sebelum validasi penuh: usulan yang sudah ada dijawab apa adanya (spec §6.2),
+// walau isi kiriman ulang kini tak lagi valid (tenggat lewat, PIC nonaktif).
+export function parseTeoRef(body: unknown): string | null {
+  const parsed = teoRef.safeParse((body as { teo_ref?: unknown } | null)?.teo_ref)
+  return parsed.success ? parsed.data : null
+}
+
 const schema = z.object({
-  teo_ref: z.string().trim().min(1, 'wajib diisi').max(100, 'maksimal 100 karakter'),
+  teo_ref: teoRef,
   teo_tanggal: z.string().refine(isRealDate, 'format YYYY-MM-DD').nullish().transform((v) => v ?? null),
   perihal: z.string().trim().min(1, 'wajib diisi').max(300, 'maksimal 300 karakter'),
   instruksi: optionalText(1000),

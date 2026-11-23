@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authorizeBotProposer, recordBotAccess, type BotTokenRow } from '@/lib/bot-access'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { parseProposalInput } from '@/lib/proposals'
+import { parseProposalInput, parseTeoRef } from '@/lib/proposals'
 import { wibDateStr } from '@/lib/utils'
 import type { ProposalStatus } from '@/lib/types'
 
@@ -37,7 +37,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ errors: ['body: JSON tidak valid'] }, { status: 400 })
   }
 
+  const teoRef = parseTeoRef(body)
+  if (!teoRef) {
+    await log(false, 'teo_ref tidak valid')
+    return NextResponse.json({ errors: ['teo_ref: wajib diisi, maksimal 100 karakter'] }, { status: 400 })
+  }
+
   const admin = createAdminClient()
+  const origin = new URL(request.url).origin
+  const reply = (row: { id: string; status: string }, status: number) =>
+    NextResponse.json({ id: row.id, status: row.status, url: `${origin}/usulan/${row.id}` }, { status })
+  const findExisting = () =>
+    admin.from('progress_proposals').select('id, status').eq('teo_ref', teoRef).maybeSingle()
+
+  // Idempoten dulu (spec §6.2): teo_ref yang sudah ada → 200 apa adanya, sebelum validasi penuh
+  const existing = await findExisting()
+  if (existing.data) {
+    await log(true, 'teo_ref sudah ada')
+    return reply(existing.data, 200)
+  }
+
   const { data: people } = await admin.from('profiles').select('id').eq('is_active', true).neq('role', 'kadiv')
   const parsed = parseProposalInput(body, {
     today: wibDateStr(),
@@ -46,18 +65,6 @@ export async function POST(request: NextRequest) {
   if (!parsed.ok) {
     await log(false, parsed.errors.join('; ').slice(0, 500))
     return NextResponse.json({ errors: parsed.errors }, { status: 400 })
-  }
-
-  const origin = new URL(request.url).origin
-  const reply = (row: { id: string; status: string }, status: number) =>
-    NextResponse.json({ id: row.id, status: row.status, url: `${origin}/usulan/${row.id}` }, { status })
-  const findExisting = () =>
-    admin.from('progress_proposals').select('id, status').eq('teo_ref', parsed.value.teo_ref).maybeSingle()
-
-  const existing = await findExisting()
-  if (existing.data) {
-    await log(true, 'teo_ref sudah ada')
-    return reply(existing.data, 200)
   }
 
   const inserted = await admin

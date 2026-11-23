@@ -1,7 +1,7 @@
 // Cek validasi usulan disposisi + pengaman redirect login:
 // node --experimental-strip-types --no-warnings scripts/check-usulan.mjs
 import assert from 'node:assert/strict'
-import { parseProposalInput } from '../lib/proposals.ts'
+import { parseProposalInput, parseTeoRef } from '../lib/proposals.ts'
 import { safeNextPath } from '../lib/safe-next.ts'
 
 const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
@@ -28,6 +28,14 @@ assert.equal(bad({ target_date: '23-11-2026' }), false)
 assert.equal(bad({ target_date: '2026-13-01' }), false) // bulan mustahil: ditolak, bukan crash
 assert.equal(bad({ teo_tanggal: '2026-02-30' }), false)
 assert.equal(parseProposalInput(null, ctx).ok, false)
+
+// Idempoten: teo_ref dibaca lebih dulu dan terpisah dari validasi penuh, supaya kiriman ulang
+// usulan lama (tenggat sudah lewat / PIC sudah nonaktif) tetap dijawab 200, bukan 400
+assert.equal(parseTeoRef({ ...ok, target_date: '2020-01-01', pic_ids: [] }), 'ND-123/2026')
+assert.equal(parseTeoRef({ teo_ref: '  ' }), null)
+assert.equal(parseTeoRef({ teo_ref: 'x'.repeat(101) }), null)
+assert.equal(parseTeoRef({ teo_ref: 123 }), null)
+assert.equal(parseTeoRef(null), null)
 
 assert.equal(safeNextPath('/usulan/abc'), '/usulan/abc')
 assert.equal(safeNextPath('/usulan/abc?x=1'), '/usulan/abc?x=1')
