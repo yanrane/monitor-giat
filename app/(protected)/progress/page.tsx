@@ -7,6 +7,7 @@ import { ProgressForm } from './ProgressForm'
 import { ProgressToggle, ProgressDelete } from './ProgressRowActions'
 import { EditTargetButton } from './EditTargetButton'
 import { AutoRefresh } from './AutoRefresh'
+import { FixTitlesButton } from './FixTitlesButton'
 import { StatusBattery } from '@/components/StatusBattery'
 import { TrendingUp, AlertTriangle, CheckCircle2, Clock, MessageCircle, ChevronDown } from 'lucide-react'
 
@@ -362,6 +363,16 @@ export default async function ProgressPage({ searchParams }: {
             Tinjau <ChevronDown size={14} className="-rotate-90" />
           </span>
         </Link>
+      )}
+
+      {/* Perbaikan sekali jalan: judul tugas lama yang masih berisi kalimat perintah */}
+      {isKadiv && (
+        <div className="flex items-center gap-2">
+          <FixTitlesButton />
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            untuk judul tugas yang masih berbunyi &ldquo;Agar …&rdquo;
+          </span>
+        </div>
       )}
 
       {/* Summary stats — klik untuk filter, klik lagi untuk semua */}
