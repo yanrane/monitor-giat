@@ -7,9 +7,8 @@ import { ProgressForm } from './ProgressForm'
 import { ProgressToggle, ProgressDelete } from './ProgressRowActions'
 import { EditTargetButton } from './EditTargetButton'
 import { AutoRefresh } from './AutoRefresh'
-import { FixTitlesButton } from './FixTitlesButton'
 import { StatusBattery } from '@/components/StatusBattery'
-import { TrendingUp, AlertTriangle, CheckCircle2, Clock, MessageCircle, ChevronDown } from 'lucide-react'
+import { TrendingUp, AlertTriangle, CheckCircle2, ClipboardList, Clock, MessageCircle, ChevronDown } from 'lucide-react'
 
 interface ItemWithPic extends ProgressItem {
   pic: Profile
@@ -316,6 +315,18 @@ export default async function ProgressPage({ searchParams }: {
     berjalan: running, melewati: overdue, tepat: onTime, terlambat: lateDone,
   }
 
+  // Rincian pekerjaan yang berasal dari usulan disposisi TEO (punya proposal_id)
+  const openDisposisi = allGroups.filter(
+    (g) => g.members.some((m) => m.proposal_id) && ['Berjalan', 'Melewati Target'].includes(groupStatus(g, today).label),
+  )
+  const picCount = new Map<string, number>()
+  for (const g of openDisposisi) {
+    for (const m of g.members) picCount.set(m.pic.full_name, (picCount.get(m.pic.full_name) ?? 0) + 1)
+  }
+  const picList = [...picCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  const nearestDisposisi = [...openDisposisi].sort((a, b) => a.target_date.localeCompare(b.target_date))[0]
+  const overdueDisposisi = openDisposisi.filter((g) => groupStatus(g, today).label === 'Melewati Target').length
+
   const rawFilter = (await searchParams).filter
   const filter: FilterKey | null = rawFilter && rawFilter in FILTERS ? rawFilter as FilterKey : null
 
@@ -365,13 +376,40 @@ export default async function ProgressPage({ searchParams }: {
         </Link>
       )}
 
-      {/* Perbaikan sekali jalan: judul tugas lama yang masih berisi kalimat perintah */}
-      {isKadiv && (
-        <div className="flex items-center gap-2">
-          <FixTitlesButton />
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            untuk judul tugas yang masih berbunyi &ldquo;Agar …&rdquo;
-          </span>
+      {/* Rincian pekerjaan yang sudah didisposisikan — ringkas, untuk Kadiv */}
+      {isKadiv && openDisposisi.length > 0 && (
+        <div className="rounded-2xl px-4 py-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <ClipboardList size={14} style={{ color: 'var(--navy-600)' }} />
+            <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--text-muted)' }}>
+              PEKERJAAN DARI DISPOSISI
+            </p>
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+              {openDisposisi.length} aktif · {picList.length} PIC
+              {overdueDisposisi > 0 && (
+                <> · <strong style={{ color: 'var(--bad)' }}>{overdueDisposisi} lewat tenggat</strong></>
+              )}
+            </span>
+            <Link href="/usulan" className="ml-auto text-xs font-semibold" style={{ color: 'var(--navy-600)' }}>
+              Semua usulan
+            </Link>
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {picList.map(([nama, jumlah]) => (
+              <span key={nama} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{nama}</span>
+                {' · '}{jumlah}
+              </span>
+            ))}
+          </div>
+
+          {nearestDisposisi && (
+            <p className="text-xs mt-2 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              Terdekat <strong style={{ color: 'var(--text-secondary)' }}>{formatDate(nearestDisposisi.target_date)}</strong>
+              {' — '}{nearestDisposisi.title}
+            </p>
+          )}
         </div>
       )}
 
