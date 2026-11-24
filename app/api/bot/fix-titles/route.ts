@@ -9,6 +9,19 @@ import { authorizeBotProposer } from '@/lib/bot-access'
  */
 export const dynamic = 'force-dynamic'
 
+export async function GET(request: Request) {
+  const auth = await authorizeBotProposer(request, '/api/bot/fix-titles', 'json')
+  if (auth.error || !auth.token) {
+    return NextResponse.json({ error: auth.error ?? 'Tidak berwenang' }, { status: auth.status ?? 401 })
+  }
+  const admin = createAdminClient()
+  const { count: proposalsLeft } = await admin
+    .from('progress_proposals').select('id', { count: 'exact', head: true }).ilike('judul', 'Agar %')
+  const { count: itemsLeft, data: sample } = await admin
+    .from('progress_items').select('title').ilike('title', 'Agar %').limit(5)
+  return NextResponse.json({ proposalsLeft: proposalsLeft ?? 0, itemsLeft: (sample?.length ?? 0) > 0 ? (itemsLeft ?? -1) : 0, sample })
+}
+
 export async function POST(request: Request) {
   const auth = await authorizeBotProposer(request, '/api/bot/fix-titles', 'json')
   if (auth.error || !auth.token) {
